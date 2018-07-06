@@ -112,6 +112,13 @@ void RbProtocol::stop() {
     }
 }
 
+bool RbProtocol::is_possessed() const {
+    xSemaphoreTake(m_mutex, portMAX_DELAY);
+    bool res = m_possessed_addr.sin_port != 0;
+    xSemaphoreGive(m_mutex);
+    return res;
+}
+
 void RbProtocol::send_mustarrive(const char *cmd, Object *params) {
     if(params == NULL) {
         params = new Object();

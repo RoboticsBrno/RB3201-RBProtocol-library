@@ -27,6 +27,8 @@ public:
     void send_log(const char *fmt, ...);
     void send_log(const char *str);
 
+    bool is_possessed() const;
+
 private:
     struct MustArrive {
         rbjson::Object *pkt;

@@ -34,6 +34,8 @@ extern "C" void app_main() {
     int i = 0;
     while(true) {
         vTaskDelay(1000 / portTICK_PERIOD_MS);
-        rb.send_log("Tick #%d\n", i++);
+        if(rb.is_possessed()) {
+            rb.send_log("Tick #%d\n", i++);
+        }
     }
 }
