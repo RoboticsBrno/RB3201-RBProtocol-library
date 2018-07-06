@@ -56,6 +56,8 @@ RbProtocol::RbProtocol(const char *owner, const char *name, const char *descript
     m_mustarrive_e = 0;
     m_mustarrive_f = 0;
     m_mustarrive_mutex = xSemaphoreCreateMutex();
+
+    memset(&m_possessed_addr, 0, sizeof(struct sockaddr_in));
 }
 
 RbProtocol::~RbProtocol() {
@@ -117,6 +119,11 @@ void RbProtocol::send_mustarrive(const char *cmd, Object *params) {
 
     struct sockaddr_in addr;
     xSemaphoreTake(m_mutex, portMAX_DELAY);
+    if(m_possessed_addr.sin_port == 0) {
+        ESP_LOGW(TAG, "can't send, the device was not possessed yet.");
+        xSemaphoreGive(m_mutex);
+        return;
+    }
     memcpy(&addr, &m_possessed_addr, sizeof(struct sockaddr_in));
     xSemaphoreGive(m_mutex);
 
@@ -138,6 +145,11 @@ void RbProtocol::send_mustarrive(const char *cmd, Object *params) {
 void RbProtocol::send(const char *cmd, Object *obj) {
     struct sockaddr_in addr;
     xSemaphoreTake(m_mutex, portMAX_DELAY);
+    if(m_possessed_addr.sin_port == 0) {
+        ESP_LOGW(TAG, "can't send, the device was not possessed yet.");
+        xSemaphoreGive(m_mutex);
+        return;
+    }
     memcpy(&addr, &m_possessed_addr, sizeof(struct sockaddr_in));
     xSemaphoreGive(m_mutex);
 
