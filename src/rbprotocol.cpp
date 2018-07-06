@@ -328,6 +328,13 @@ void RbProtocol::handle_msg(struct sockaddr_in *addr, char *buf, ssize_t size) {
                 m_mustarrive_f = 0;
             }
             xSemaphoreGive(m_mutex);
+
+            xSemaphoreTake(m_mustarrive_mutex, portMAX_DELAY);
+            for(auto it : m_mustarrive_queue) {
+                delete it.pkt;
+            }
+            m_mustarrive_queue.clear();
+            xSemaphoreGive(m_mustarrive_mutex);
         }
 
         int f = pkt->getInt("f");
