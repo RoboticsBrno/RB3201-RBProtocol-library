@@ -1,3 +1,9 @@
+# RbProtocol
+
+A library faciliating communication with RbController Android app: https://play.google.com/store/apps/details?id=com.tassadar.rbcontroller
+
+
+```cpp
 #include <esp_log.h>
 #include <lwip/sockets.h>
 #include <string.h>
@@ -37,3 +43,4 @@ extern "C" void app_main() {
         rb.send_log("Tick #%d\n", i++);
     }
 }
+```
