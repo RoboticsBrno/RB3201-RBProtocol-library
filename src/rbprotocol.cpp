@@ -20,7 +20,7 @@ using namespace rbjson;
 static const char* TAG = "RbProtocol";
 
 #define MUST_ARRIVE_TIMER_PERIOD 50
-#define MUST_ARRIVE_ATTEMPTS 15
+#define MUST_ARRIVE_ATTEMPTS 100
 
 static int diff_ms(timeval& t1, timeval& t2) {
     return (((t1.tv_sec - t2.tv_sec) * 1000000) + 
