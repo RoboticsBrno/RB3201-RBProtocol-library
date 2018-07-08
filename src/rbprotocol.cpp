@@ -86,6 +86,21 @@ void RbProtocol::start(int port) {
         return;
     }
 
+    int flags = fcntl(m_socket, F_GETFL,0);
+    if(flags < 0) {
+        ESP_LOGE(TAG, "failed to F_GETFL: %s", strerror(errno));
+        close(m_socket);
+        m_socket = -1;
+        return;
+    }
+
+    if(fcntl(m_socket, F_SETFL, flags | O_NONBLOCK) < 0) {
+        ESP_LOGE(TAG, "failed to set O_NONBLOCK: %s", strerror(errno));
+        close(m_socket);
+        m_socket = -1;
+        return;
+    }
+
     struct sockaddr_in addr_bind;
     memset(&addr_bind, 0, sizeof(addr_bind));
     addr_bind.sin_family = AF_INET;
@@ -193,10 +208,18 @@ void RbProtocol::send(struct sockaddr_in *addr, const char *buf, size_t size) {
     int socket = m_socket;
     xSemaphoreGive(m_mutex);
 
-    if(m_socket != -1) {
-        if(sendto(socket, buf, size, 0, (struct sockaddr*)addr, sizeof(struct sockaddr_in)) < 0) {
-            ESP_LOGE(TAG, "failed to send message %.*s: %s", size, buf, strerror(errno));
-        }
+    if(m_socket == -1) {
+        return;
+    }
+
+    int res = ::sendto(socket, buf, size, 0, (struct sockaddr*)addr, sizeof(struct sockaddr_in));
+    while(res < 0 && (errno = EAGAIN || errno == EWOULDBLOCK)) {
+        vTaskDelay(1 / portTICK_PERIOD_MS);
+        res = ::sendto(socket, buf, size, 0, (struct sockaddr*)addr, sizeof(struct sockaddr_in));
+    }
+
+    if(res < 0) {
+        ESP_LOGE(TAG, "failed to send message %.*s: %s", size, buf, strerror(errno));
     }
 }
 
