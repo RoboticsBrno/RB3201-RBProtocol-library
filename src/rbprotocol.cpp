@@ -214,7 +214,7 @@ void RbProtocol::send(struct sockaddr_in *addr, const char *buf, size_t size) {
 
     int res = ::sendto(socket, buf, size, 0, (struct sockaddr*)addr, sizeof(struct sockaddr_in));
     while(res < 0 && (errno = EAGAIN || errno == EWOULDBLOCK)) {
-        vTaskDelay(1 / portTICK_PERIOD_MS);
+        vTaskDelay(10 / portTICK_PERIOD_MS);
         res = ::sendto(socket, buf, size, 0, (struct sockaddr*)addr, sizeof(struct sockaddr_in));
     }
 
