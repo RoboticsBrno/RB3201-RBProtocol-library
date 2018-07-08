@@ -8,6 +8,9 @@
 
 #define RBPROTOCOL_PORT 42424
 
+#define RBPROTOCOL_AXIS_MIN (-32767)
+#define RBPROTOCOL_AXIS_MAX (32767)
+
 struct rb_string_view;
 
 typedef void (*RbProtocolCallback)(void *cookie, const std::string& command, rbjson::Object *pkt);
