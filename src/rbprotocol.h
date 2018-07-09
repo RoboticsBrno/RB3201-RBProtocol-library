@@ -1,8 +1,10 @@
 #pragma once
 
-#include "freertos/semphr.h"
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 #include <string>
 #include <vector>
+#include <sys/socket.h>
 
 #include "rbjson.h"
 
