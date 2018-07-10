@@ -8,31 +8,52 @@
 
 #include "rbjson.h"
 
-#define RBPROTOCOL_PORT 42424
 
-#define RBPROTOCOL_AXIS_MIN (-32767)
-#define RBPROTOCOL_AXIS_MAX (32767)
+#define RBPROTOCOL_PORT 42424 //!< The default RBProtocol port
 
-struct rb_string_view;
+#define RBPROTOCOL_AXIS_MIN (-32767) //!< Minimal value of axes in "joy" command
+#define RBPROTOCOL_AXIS_MAX (32767)  //!< Maximal value of axes in "joy" command
 
+/**
+ * \brief This is the type for onPacketReceived callback
+ */
 typedef void (*RbProtocolCallback)(void *cookie, const std::string& command, rbjson::Object *pkt);
 
+/**
+ * \brief Class that manages the RBProtocol communication
+ */
 class RbProtocol {
 public:
+    /**
+     * The onPacketReceivedCallback is called when a packet arrives.
+     * It runs on a separate task, only single packet is processed at a time.
+     */
     RbProtocol(const char *owner, const char *name, const char *description,
-        RbProtocolCallback callback = NULL, void *callback_cookie = NULL);
+        RbProtocolCallback onPacketReceivedCallback = NULL, void *callback_cookie = NULL);
     ~RbProtocol();
 
-    void start(int port = RBPROTOCOL_PORT);
-    void stop();
+    void start(int port = RBPROTOCOL_PORT); //!< Start listening for UDP packets on port
+    void stop(); //!< Stop listening
 
-    void send(const char *cmd, rbjson::Object *params);
-    void send_mustarrive(const char *cmd, rbjson::Object *params);
+    /**
+     * \brief Send command cmd with params, without making sure it arrives.
+     * 
+     * If you pass the params object, you are responsible for its deletion.
+     */
+    void send(const char *cmd, rbjson::Object *params = NULL);
 
-    void send_log(const char *fmt, ...);
-    void send_log(const char *str);
+    /**
+     * \brief Send command cmd with params and make sure it arrives.
+     * 
+     * If you pass the params object, it has to be heap-allocated and 
+     * RbProtocol becomes its owner - you MUST NOT delete it.
+     */
+    void send_mustarrive(const char *cmd, rbjson::Object *params = NULL);
 
-    bool is_possessed() const;
+    void send_log(const char *fmt, ...); //!< Send a message to the android app
+    void send_log(const char *str); //!< Send a message to the android app
+
+    bool is_possessed() const; //!< Returns true of the device is possessed (somebody connected to it) 
 
 private:
     struct MustArrive {

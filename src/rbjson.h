@@ -4,27 +4,21 @@
 #include <vector>
 #include <sstream>
 
-#include "jsmn.h"
-
-struct rb_string_view {
-    char *ptr;
-    int len;
-
-    bool equal(const char *other) {
-        return strlen(other) == len && memcmp(other, ptr, len) == 0;
-    }
-};
-
-rb_string_view rbjson_get_string(char *buf, jsmntok_t *obj, const char *name);
-int rbjson_get_int(char *buf, jsmntok_t *obj, const char *name, bool *found=NULL);
-
-
+/**
+ * \brief JSON-related objects
+ */
 namespace rbjson {
 
 class Object;
 
+/**
+ * \brief Parse a JSON string to an object.
+ */
 Object *parse(char *buf, size_t size);
 
+/**
+ * \brief Base JSON value class, not instanceable.
+ */
 class Value {
 public:
     enum type_t {
@@ -39,13 +33,15 @@ public:
     Value(type_t type = NIL);
     virtual ~Value();
 
-    virtual void serialize(std::stringstream& ss) const = 0;
-    std::string str() const;
+    virtual void serialize(std::stringstream& ss) const = 0; //!< Serialize the value to a string
+    std::string str() const; //!< Helper that calls serialize() and returns a string
 
-    type_t getType() const {
+    //!< Get the object type
+    type_t getType() const { 
         return m_type;
     }
 
+    //!< Return true if the object is of type NIL
     bool isNil() const {
         return m_type == NIL;
     }
@@ -56,6 +52,9 @@ protected:
 
 class Array;
 
+/**
+ * \brief A JSON Object
+ */
 class Object : public Value {
 public:
     static Object *parse(char *buf, size_t size);
@@ -86,6 +85,9 @@ private:
     std::unordered_map<std::string, Value*> m_members;
 };
 
+/**
+ * \brief A JSON Array
+ */
 class Array : public Value {
 public:
     Array();
@@ -114,6 +116,9 @@ private:
     std::vector<Value*> m_items;
 };
 
+/**
+ * \brief A JSON String
+ */
 class String : public Value {
 public:
     explicit String(const char *value = "");
@@ -128,6 +133,9 @@ private:
     std::string m_value;
 };
 
+/**
+ * \brief A JSON Number. It's a double internally.
+ */
 class Number : public Value {
 public:
     explicit Number(double value = 0.0);
@@ -141,6 +149,9 @@ private:
     double m_value;
 };
 
+/**
+ * \brief JSON Boolean value
+ */
 class Bool : public Value {
 public:
     explicit Bool(bool value = false);
@@ -154,6 +165,9 @@ private:
     bool m_value;
 };
 
+/**
+ * \brief JSON Nil(null) value.
+ */
 class Nil : public Value {
 public:
     void serialize(std::stringstream& ss) const;

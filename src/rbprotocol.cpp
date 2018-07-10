@@ -27,6 +27,7 @@ static int diff_ms(timeval& t1, timeval& t2) {
             (t1.tv_usec - t2.tv_usec))/1000;
 }
 
+/// @private
 class SemaphoreHolder {
 public:
     SemaphoreHolder(SemaphoreHandle_t mu) : m_mutex(mu) {
@@ -40,11 +41,11 @@ private:
 };
 
 RbProtocol::RbProtocol(const char *owner, const char *name, const char *description,
-    RbProtocolCallback callback, void *callback_cookie) {
+    RbProtocolCallback onPacketReceivedCallback, void *callback_cookie) {
     m_owner = owner;
     m_name = name;
     m_desc = description;
-    m_callback = callback;
+    m_callback = onPacketReceivedCallback;
     m_callback_cookie = callback_cookie;
 
     m_socket = -1;
