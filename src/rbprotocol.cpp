@@ -381,7 +381,7 @@ void RbProtocol::handle_msg(struct sockaddr_in *addr, char *buf, ssize_t size) {
     }
 
     if(cmd == "possess") {   
-        ESP_LOGI(TAG, "We are possessed!")
+        ESP_LOGI(TAG, "We are possessed!");
         send_log("The device %s has been possessed!\n", m_name);
     } else if(m_callback != NULL) {
         m_callback(m_callback_cookie, cmd, pkt.get());
