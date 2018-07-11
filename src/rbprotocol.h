@@ -8,29 +8,32 @@
 
 #include "rbjson.h"
 
+namespace rb {
 
 #define RBPROTOCOL_PORT 42424 //!< The default RBProtocol port
 
 #define RBPROTOCOL_AXIS_MIN (-32767) //!< Minimal value of axes in "joy" command
 #define RBPROTOCOL_AXIS_MAX (32767)  //!< Maximal value of axes in "joy" command
 
+class Protocol;
+
 /**
  * \brief This is the type for onPacketReceived callback
  */
-typedef void (*RbProtocolCallback)(RbProtocol& protocol, void *cookie, const std::string& command, rbjson::Object *pkt);
+typedef void (*ProtocolCallback)(Protocol& protocol, void *cookie, const std::string& command, rbjson::Object *pkt);
 
 /**
  * \brief Class that manages the RBProtocol communication
  */
-class RbProtocol {
+class Protocol {
 public:
     /**
      * The onPacketReceivedCallback is called when a packet arrives.
      * It runs on a separate task, only single packet is processed at a time.
      */
-    RbProtocol(const char *owner, const char *name, const char *description,
-        RbProtocolCallback onPacketReceivedCallback = NULL, void *callback_cookie = NULL);
-    ~RbProtocol();
+    Protocol(const char *owner, const char *name, const char *description,
+        ProtocolCallback onPacketReceivedCallback = NULL, void *callback_cookie = NULL);
+    ~Protocol();
 
     void start(int port = RBPROTOCOL_PORT); //!< Start listening for UDP packets on port
     void stop(); //!< Stop listening
@@ -76,7 +79,7 @@ private:
     const char *m_name;
     const char *m_desc;
 
-    RbProtocolCallback m_callback;
+    ProtocolCallback m_callback;
     void *m_callback_cookie;
 
     int m_socket;
@@ -89,4 +92,6 @@ private:
     uint32_t m_mustarrive_f;
     std::vector<MustArrive> m_mustarrive_queue;
     SemaphoreHandle_t m_mustarrive_mutex;
+};
+
 };

@@ -40,8 +40,10 @@ private:
     SemaphoreHandle_t m_mutex;
 };
 
-RbProtocol::RbProtocol(const char *owner, const char *name, const char *description,
-    RbProtocolCallback onPacketReceivedCallback, void *callback_cookie) {
+namespace rb {
+
+Protocol::Protocol(const char *owner, const char *name, const char *description,
+    ProtocolCallback onPacketReceivedCallback, void *callback_cookie) {
     m_owner = owner;
     m_name = name;
     m_desc = description;
@@ -61,11 +63,11 @@ RbProtocol::RbProtocol(const char *owner, const char *name, const char *descript
     memset(&m_possessed_addr, 0, sizeof(struct sockaddr_in));
 }
 
-RbProtocol::~RbProtocol() {
+Protocol::~Protocol() {
     stop();
 }
 
-void RbProtocol::start(int port) {
+void Protocol::start(int port) {
     SemaphoreHolder mu(m_mutex);
 
     if(m_socket != -1) {
@@ -117,10 +119,10 @@ void RbProtocol::start(int port) {
         return;
     }
 
-    xTaskCreate(&RbProtocol::read_task_trampoline, "rbctrl_reader", 4096, this, 5, NULL);
+    xTaskCreate(&Protocol::read_task_trampoline, "rbctrl_reader", 4096, this, 5, NULL);
 }
 
-void RbProtocol::stop() {
+void Protocol::stop() {
     SemaphoreHolder mu(m_mutex);
     if(m_socket != -1) {
         close(m_socket);
@@ -128,14 +130,14 @@ void RbProtocol::stop() {
     }
 }
 
-bool RbProtocol::is_possessed() const {
+bool Protocol::is_possessed() const {
     xSemaphoreTake(m_mutex, portMAX_DELAY);
     bool res = m_possessed_addr.sin_port != 0;
     xSemaphoreGive(m_mutex);
     return res;
 }
 
-void RbProtocol::send_mustarrive(const char *cmd, Object *params) {
+void Protocol::send_mustarrive(const char *cmd, Object *params) {
     if(params == NULL) {
         params = new Object();
     }
@@ -165,7 +167,7 @@ void RbProtocol::send_mustarrive(const char *cmd, Object *params) {
     send(&addr, params);
 }
 
-void RbProtocol::send(const char *cmd, Object *obj) {
+void Protocol::send(const char *cmd, Object *obj) {
     struct sockaddr_in addr;
     xSemaphoreTake(m_mutex, portMAX_DELAY);
     if(m_possessed_addr.sin_port == 0) {
@@ -179,7 +181,7 @@ void RbProtocol::send(const char *cmd, Object *obj) {
     send(&addr, cmd, obj);
 }
 
-void RbProtocol::send(struct sockaddr_in *addr, const char *cmd, Object *obj) {
+void Protocol::send(struct sockaddr_in *addr, const char *cmd, Object *obj) {
     std::unique_ptr<Object> autoptr;
     if(obj == NULL) {
         obj = new Object();
@@ -190,7 +192,7 @@ void RbProtocol::send(struct sockaddr_in *addr, const char *cmd, Object *obj) {
     send(addr, obj);
 }
 
-void RbProtocol::send(struct sockaddr_in *addr, Object *obj) {
+void Protocol::send(struct sockaddr_in *addr, Object *obj) {
     xSemaphoreTake(m_mutex, portMAX_DELAY);
     int n = m_write_counter++;
     xSemaphoreGive(m_mutex);
@@ -200,11 +202,11 @@ void RbProtocol::send(struct sockaddr_in *addr, Object *obj) {
     send(addr, str.c_str(), str.size());
 }
 
-void RbProtocol::send(struct sockaddr_in *addr, const char *buf) {
+void Protocol::send(struct sockaddr_in *addr, const char *buf) {
     send(addr, buf, strlen(buf));
 }
 
-void RbProtocol::send(struct sockaddr_in *addr, const char *buf, size_t size) {
+void Protocol::send(struct sockaddr_in *addr, const char *buf, size_t size) {
     xSemaphoreTake(m_mutex, portMAX_DELAY);
     int socket = m_socket;
     xSemaphoreGive(m_mutex);
@@ -224,7 +226,7 @@ void RbProtocol::send(struct sockaddr_in *addr, const char *buf, size_t size) {
     }
 }
 
-void RbProtocol::send_log(const char *fmt, ...) {
+void Protocol::send_log(const char *fmt, ...) {
     char buf[512];
 
     va_list args;
@@ -237,11 +239,11 @@ void RbProtocol::send_log(const char *fmt, ...) {
     send_mustarrive("log", pkt);
 }
 
-void RbProtocol::read_task_trampoline(void *ctrl) {
-    ((RbProtocol*)ctrl)->read_task();
+void Protocol::read_task_trampoline(void *ctrl) {
+    ((Protocol*)ctrl)->read_task();
 }
 
-void RbProtocol::read_task() {
+void Protocol::read_task() {
     xSemaphoreTake(m_mutex, portMAX_DELAY);
     int socket = m_socket;
     xSemaphoreGive(m_mutex);
@@ -300,7 +302,7 @@ void RbProtocol::read_task() {
     }
 }
 
-void RbProtocol::handle_msg(struct sockaddr_in *addr, char *buf, ssize_t size) {
+void Protocol::handle_msg(struct sockaddr_in *addr, char *buf, ssize_t size) {
     std::unique_ptr<Object> pkt(parse(buf, size));
     if(!pkt) {
         ESP_LOGE(TAG, "failed to parse the packet's json");
@@ -388,3 +390,6 @@ void RbProtocol::handle_msg(struct sockaddr_in *addr, char *buf, ssize_t size) {
         m_callback(*this, m_callback_cookie, cmd, pkt.get());
     }
 }
+
+
+}; // namespace rb

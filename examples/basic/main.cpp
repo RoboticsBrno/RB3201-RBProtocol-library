@@ -8,7 +8,7 @@
 #include "rbprotocol.h"
 #include "rbwebserver.h"
 
-void onPktReceived(void *cookie, const std::string& command, rbjson::Object *pkt) {
+void onPktReceived(rb::Protocol &protocol, void *cookie, const std::string& command, rbjson::Object *pkt) {
     if(command == "joy") {
         printf("Joy: ");
         rbjson::Array *data = pkt->getArray("data");
@@ -26,16 +26,16 @@ extern "C" void app_main() {
     // Create web server, serves static files from the spiffs memory
     rb_web_start(80);
     
-    RbProtocol rb("Foo", "Bar", "The very best bar", &onPktReceived);
-    rb.start();
+    rb::Protocol prot("Foo", "Bar", "The very best bar", &onPktReceived);
+    prot.start();
 
     printf("Hello world!\n");
 
     int i = 0;
     while(true) {
         vTaskDelay(1000 / portTICK_PERIOD_MS);
-        if(rb.is_possessed()) {
-            rb.send_log("Tick #%d\n", i++);
+        if(prot.is_possessed()) {
+            prot.send_log("Tick #%d\n", i++);
         }
     }
 }
