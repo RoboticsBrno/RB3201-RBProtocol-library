@@ -217,7 +217,7 @@ void Protocol::send(struct sockaddr_in *addr, const char *buf, size_t size) {
 
     int res = ::sendto(socket, buf, size, 0, (struct sockaddr*)addr, sizeof(struct sockaddr_in));
     while(res < 0 && (errno = EAGAIN || errno == EWOULDBLOCK)) {
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        vTaskDelay(1);
         res = ::sendto(socket, buf, size, 0, (struct sockaddr*)addr, sizeof(struct sockaddr_in));
     }
 
