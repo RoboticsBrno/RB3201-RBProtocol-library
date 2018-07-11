@@ -17,7 +17,7 @@
 /**
  * \brief This is the type for onPacketReceived callback
  */
-typedef void (*RbProtocolCallback)(void *cookie, const std::string& command, rbjson::Object *pkt);
+typedef void (*RbProtocolCallback)(RbProtocol& protocol, void *cookie, const std::string& command, rbjson::Object *pkt);
 
 /**
  * \brief Class that manages the RBProtocol communication
