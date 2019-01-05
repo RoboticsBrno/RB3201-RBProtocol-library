@@ -62,4 +62,4 @@ install:
     - platformio update
 
 script:
-    - platformio ci --lib="." --project-conf="./platformio.ini" 
+    - platformio ci --lib="." --board=esp32dev
