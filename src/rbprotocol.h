@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <sys/socket.h>
+#include <functional>
 
 #include "rbjson.h"
 
@@ -18,11 +19,6 @@ namespace rb {
 class Protocol;
 
 /**
- * \brief This is the type for onPacketReceived callback
- */
-typedef void (*ProtocolCallback)(Protocol& protocol, void *cookie, const std::string& command, rbjson::Object *pkt);
-
-/**
  * \brief Class that manages the RBProtocol communication
  */
 class Protocol {
@@ -32,7 +28,7 @@ public:
      * It runs on a separate task, only single packet is processed at a time.
      */
     Protocol(const char *owner, const char *name, const char *description,
-        ProtocolCallback onPacketReceivedCallback = NULL, void *callback_cookie = NULL);
+        std::function<void(const std::string& cmd, rbjson::Object* pkt)> callback = nullptr);
     ~Protocol();
 
     void start(int port = RBPROTOCOL_PORT); //!< Start listening for UDP packets on port
@@ -79,8 +75,7 @@ private:
     const char *m_name;
     const char *m_desc;
 
-    ProtocolCallback m_callback;
-    void *m_callback_cookie;
+    std::function<void(const std::string& cmd, rbjson::Object* pkt)> m_callback;
 
     int m_socket;
     int m_read_counter;
