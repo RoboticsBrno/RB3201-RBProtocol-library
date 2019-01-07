@@ -14,7 +14,7 @@ A library faciliating communication with RbController Android app: https://play.
 #include "rbprotocol.h"
 #include "rbwebserver.h"
 
-void onPktReceived(rb::Protocol &protocol, void *cookie, const std::string& command, rbjson::Object *pkt) {
+void onPktReceived(const std::string& command, rbjson::Object *pkt) {
     if(command == "joy") {
         printf("Joy: ");
         rbjson::Array *data = pkt->getArray("data");

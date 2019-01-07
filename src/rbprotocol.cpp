@@ -43,12 +43,11 @@ private:
 namespace rb {
 
 Protocol::Protocol(const char *owner, const char *name, const char *description,
-    ProtocolCallback onPacketReceivedCallback, void *callback_cookie) {
+    std::function<void(const std::string& cmd, rbjson::Object* pkt)> callback) {
     m_owner = owner;
     m_name = name;
     m_desc = description;
-    m_callback = onPacketReceivedCallback;
-    m_callback_cookie = callback_cookie;
+    m_callback = callback;
 
     m_socket = -1;
     m_mutex = xSemaphoreCreateMutex();
@@ -387,7 +386,7 @@ void Protocol::handle_msg(struct sockaddr_in *addr, char *buf, ssize_t size) {
         ESP_LOGI(TAG, "We are possessed!");
         send_log("The device %s has been possessed!\n", m_name);
     } else if(m_callback != NULL) {
-        m_callback(*this, m_callback_cookie, cmd, pkt.get());
+        m_callback(cmd, pkt.get());
     }
 }
 
