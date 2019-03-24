@@ -1,4 +1,3 @@
-#include <arpa/inet.h>          /* inet_ntoa */
 #include <signal.h>
 #include <dirent.h>
 #include <errno.h>
