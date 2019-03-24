@@ -200,7 +200,7 @@ Value *Object::get(const char *key) const {
 
 Object *Object::getObject(const char *key) const {
     auto *val = get(key);
-    if(val->getType() == OBJECT) {
+    if(val && val->getType() == OBJECT) {
         return (Object*)val;
     }
     return NULL;
@@ -208,7 +208,7 @@ Object *Object::getObject(const char *key) const {
 
 Array *Object::getArray(const char *key) const {
     auto *val = get(key);
-    if(val->getType() == ARRAY) {
+    if(val && val->getType() == ARRAY) {
         return (Array*)val;
     }
     return NULL;
@@ -216,7 +216,7 @@ Array *Object::getArray(const char *key) const {
 
 std::string Object::getString(const char *key, std::string def) const {
     auto *val = get(key);
-    if(val->getType() == STRING) {
+    if(val && val->getType() == STRING) {
         return ((String*)val)->get();
     } else {
         return def;
@@ -225,7 +225,7 @@ std::string Object::getString(const char *key, std::string def) const {
 
 int64_t Object::getInt(const char *key, int64_t def) const {
     auto *val = get(key);
-    if(val->getType() == NUMBER) {
+    if(val && val->getType() == NUMBER) {
         return ((Number*)val)->get();
     } else {
         return def;
@@ -234,7 +234,7 @@ int64_t Object::getInt(const char *key, int64_t def) const {
 
 double Object::getDouble(const char *key, double def) const {
     auto *val = get(key);
-    if(val->getType() == NUMBER) {
+    if(val && val->getType() == NUMBER) {
         return ((Number*)val)->get();
     } else {
         return def;
@@ -243,7 +243,7 @@ double Object::getDouble(const char *key, double def) const {
 
 bool Object::getBool(const char *key, bool def) const {
     auto *val = get(key);
-    if(val->getType() == BOOL) {
+    if(val && val->getType() == BOOL) {
         return ((Bool*)val)->get();
     } else {
         return def;
@@ -271,7 +271,6 @@ void Object::set(const char *key, const std::string& str) {
 void Object::set(const char *key, int64_t number) {
     set(key, new Number(number));
 }
-
 
 void Object::remove(const char *key) {
     auto itr = m_members.find(key);
@@ -310,7 +309,7 @@ Value *Array::get(size_t idx) const {
 
 Object *Array::getObject(size_t idx) const {
     auto *val = get(idx);
-    if(val->getType() == OBJECT) {
+    if(val && val->getType() == OBJECT) {
         return (Object*)val;
     }
     return NULL;
@@ -318,7 +317,7 @@ Object *Array::getObject(size_t idx) const {
 
 Array *Array::getArray(size_t idx) const {
     auto *val = get(idx);
-    if(val->getType() == ARRAY) {
+    if(val && val->getType() == ARRAY) {
         return (Array*)val;
     }
     return NULL;
@@ -326,7 +325,7 @@ Array *Array::getArray(size_t idx) const {
 
 std::string Array::getString(size_t idx, std::string def) const {
     auto *val = get(idx);
-    if(val->getType() == STRING) {
+    if(val && val->getType() == STRING) {
         return ((String*)val)->get();
     } else {
         return def;
@@ -335,7 +334,7 @@ std::string Array::getString(size_t idx, std::string def) const {
 
 int64_t Array::getInt(size_t idx, int64_t def) const {
     auto *val = get(idx);
-    if(val->getType() == NUMBER) {
+    if(val && val->getType() == NUMBER) {
         return ((Number*)val)->get();
     } else {
         return def;
@@ -344,7 +343,7 @@ int64_t Array::getInt(size_t idx, int64_t def) const {
 
 double Array::getDouble(size_t idx, double def) const {
     auto *val = get(idx);
-    if(val->getType() == NUMBER) {
+    if(val && val->getType() == NUMBER) {
         return ((Number*)val)->get();
     } else {
         return def;
@@ -353,7 +352,7 @@ double Array::getDouble(size_t idx, double def) const {
 
 bool Array::getBool(size_t idx, bool def) const {
     auto *val = get(idx);
-    if(val->getType() == BOOL) {
+    if(val && val->getType() == BOOL) {
         return ((Bool*)val)->get();
     } else {
         return def;
