@@ -23,7 +23,7 @@ static const char* TAG = "RbProtocol";
 #define MUST_ARRIVE_ATTEMPTS 40
 
 static int diff_ms(timeval& t1, timeval& t2) {
-    return (((t1.tv_sec - t2.tv_sec) * 1000000) + 
+    return (((t1.tv_sec - t2.tv_sec) * 1000000) +
             (t1.tv_usec - t2.tv_usec))/1000;
 }
 
@@ -73,8 +73,8 @@ void Protocol::start(int port) {
         ESP_LOGE(TAG, "start() when already started.");
         return;
     }
-    
-    m_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); 
+
+    m_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if(m_socket == -1) {
         ESP_LOGE(TAG, "failed to create socket: %s", strerror(errno));
         return;
@@ -108,7 +108,7 @@ void Protocol::start(int port) {
     addr_bind.sin_family = AF_INET;
     addr_bind.sin_port = htons(port);
     addr_bind.sin_addr.s_addr = htonl(INADDR_ANY);
-     
+
     //bind socket to port
     if(bind(m_socket, (struct sockaddr*)&addr_bind, sizeof(addr_bind)) == -1)
     {
@@ -251,7 +251,7 @@ void Protocol::read_task() {
 
     struct sockaddr_in addr_recv;
     socklen_t addrlen = sizeof(struct sockaddr_in);
-    char *buf = new char[bufsize]; 
+    char *buf = new char[bufsize];
     ssize_t read;
 
     uint32_t mustarrive_timer = MUST_ARRIVE_TIMER_PERIOD;
@@ -309,7 +309,7 @@ void Protocol::handle_msg(struct sockaddr_in *addr, char *buf, ssize_t size) {
     }
 
     auto cmd = pkt->getString("c");
-    
+
     ESP_LOGD(TAG, "Got command: %s %.*s", cmd.c_str(), size, buf);
 
     if(cmd == "discover") {
@@ -382,7 +382,7 @@ void Protocol::handle_msg(struct sockaddr_in *addr, char *buf, ssize_t size) {
         return;
     }
 
-    if(cmd == "possess") {   
+    if(cmd == "possess") {
         ESP_LOGI(TAG, "We are possessed!");
         send_log("The device %s has been possessed!\n", m_name);
     } else if(m_callback != NULL) {

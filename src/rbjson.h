@@ -37,7 +37,7 @@ public:
     std::string str() const; //!< Helper that calls serialize() and returns a string
 
     //!< Get the object type
-    type_t getType() const { 
+    type_t getType() const {
         return m_type;
     }
 
@@ -77,7 +77,7 @@ public:
     void set(const char *key, Value *value);
     void set(const char *key, const char *string);
     void set(const char *key, const std::string& str);
-    void set(const char *key, int64_t number);
+    void set(const char *key, double number);
 
     void remove(const char *key);
 

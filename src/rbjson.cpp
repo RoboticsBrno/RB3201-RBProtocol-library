@@ -52,7 +52,7 @@ static Object *parse_object(char *buf, jsmntok_t *obj) {
         if(tok->type != JSMN_STRING || tok->size != 1) {
             continue;
         }
-        
+
         Value *val = parse_value(buf, tok+1);
         if(val != NULL) {
             std::string key(buf + tok->start, tok->end - tok->start);
@@ -71,7 +71,7 @@ static Array *parse_array(char *buf, jsmntok_t *arr) {
 
     Array *res = new Array();
     jsmntok_t *tok = arr + 1;
-    for(int i = 0; i < arr->size; ++i) {      
+    for(int i = 0; i < arr->size; ++i) {
         Value *val = parse_value(buf, tok);
         if(val != NULL) {
             res->push_back(val);
@@ -268,7 +268,7 @@ void Object::set(const char *key, const std::string& str) {
     set(key, new String(str));
 }
 
-void Object::set(const char *key, int64_t number) {
+void Object::set(const char *key, double number) {
     set(key, new Number(number));
 }
 
@@ -277,7 +277,7 @@ void Object::remove(const char *key) {
     if(itr != m_members.end()) {
         delete itr->second;
         m_members.erase(itr);
-    } 
+    }
 }
 
 Array::Array() : Value(Value::ARRAY) {
