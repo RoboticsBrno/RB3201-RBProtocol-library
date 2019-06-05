@@ -7,7 +7,7 @@ extern "C" {
 /**
  * \brief Start serving files from SPIFFS on http on port.
  */
-void rb_web_start(int port);
+TaskHandle_t rb_web_start(int port);
 
 #ifdef __cplusplus
 }

@@ -10,6 +10,7 @@
 #include "lwip/err.h"
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
+#include "lwip/udp.h"
 #include <lwip/netdb.h>
 
 #include "rbprotocol.h"
@@ -27,19 +28,6 @@ static int diff_ms(timeval& t1, timeval& t2) {
             (t1.tv_usec - t2.tv_usec))/1000;
 }
 
-/// @private
-class SemaphoreHolder {
-public:
-    SemaphoreHolder(SemaphoreHandle_t mu) : m_mutex(mu) {
-        xSemaphoreTake(mu, portMAX_DELAY);
-    }
-    ~SemaphoreHolder() {
-        xSemaphoreGive(m_mutex);
-    }
-private:
-    SemaphoreHandle_t m_mutex;
-};
-
 namespace rb {
 
 Protocol::Protocol(const char *owner, const char *name, const char *description,
@@ -49,15 +37,19 @@ Protocol::Protocol(const char *owner, const char *name, const char *description,
     m_desc = description;
     m_callback = callback;
 
-    m_socket = -1;
-    m_mutex = xSemaphoreCreateMutex();
+    m_task_send = nullptr;
+    m_task_recv = nullptr;
+
+    m_possessed_port = 0;
+
+    m_sendQueue = xQueueCreate(32, sizeof(SendQueueItem));
+    m_recvQueue = xQueueCreate(32, sizeof(RecvQueueItem));
 
     m_read_counter = 0;
     m_write_counter = 0;
 
     m_mustarrive_e = 0;
     m_mustarrive_f = 0;
-    m_mustarrive_mutex = xSemaphoreCreateMutex();
 
     memset(&m_possessed_addr, 0, sizeof(struct sockaddr_in));
 }
@@ -66,74 +58,47 @@ Protocol::~Protocol() {
     stop();
 }
 
-void Protocol::start(int port) {
-    SemaphoreHolder mu(m_mutex);
-
-    if(m_socket != -1) {
-        ESP_LOGE(TAG, "start() when already started.");
+void Protocol::start(u16_t port) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if(m_task_send != nullptr) {
         return;
     }
 
-    m_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if(m_socket == -1) {
-        ESP_LOGE(TAG, "failed to create socket: %s", strerror(errno));
-        return;
-    }
-
-    int enable = 1;
-    if(setsockopt(m_socket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) == -1) {
-        ESP_LOGE(TAG, "failed to set SO_REUSEADDR: %s", strerror(errno));
-        close(m_socket);
-        m_socket = -1;
-        return;
-    }
-
-    int flags = fcntl(m_socket, F_GETFL,0);
-    if(flags < 0) {
-        ESP_LOGE(TAG, "failed to F_GETFL: %s", strerror(errno));
-        close(m_socket);
-        m_socket = -1;
-        return;
-    }
-
-    if(fcntl(m_socket, F_SETFL, flags | O_NONBLOCK) < 0) {
-        ESP_LOGE(TAG, "failed to set O_NONBLOCK: %s", strerror(errno));
-        close(m_socket);
-        m_socket = -1;
-        return;
-    }
-
-    struct sockaddr_in addr_bind;
-    memset(&addr_bind, 0, sizeof(addr_bind));
-    addr_bind.sin_family = AF_INET;
-    addr_bind.sin_port = htons(port);
-    addr_bind.sin_addr.s_addr = htonl(INADDR_ANY);
-
-    //bind socket to port
-    if(bind(m_socket, (struct sockaddr*)&addr_bind, sizeof(addr_bind)) == -1)
-    {
-        ESP_LOGE(TAG, "failed to bind socket: %s", strerror(errno));
-        close(m_socket);
-        m_socket = -1;
-        return;
-    }
-
-    xTaskCreate(&Protocol::read_task_trampoline, "rbctrl_reader", 4096, this, 5, NULL);
+    m_port = port;
+    xTaskCreate(&Protocol::send_task_trampoline, "rbctrl_send", 3072, this, 5, &m_task_send);
+    xTaskCreate(&Protocol::recv_task_trampoline, "rbctrl_recv", 4096, this, 5, &m_task_recv);
 }
 
 void Protocol::stop() {
-    SemaphoreHolder mu(m_mutex);
-    if(m_socket != -1) {
-        close(m_socket);
-        m_socket = -1;
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if(m_task_send == nullptr) {
+        return;
     }
+
+    SendQueueItem sit = { 0 };
+    xQueueSend(m_sendQueue, &sit, portMAX_DELAY);
+
+    RecvQueueItem rit = { 0 };
+    xQueueSend(m_recvQueue, &rit, portMAX_DELAY);
+
+    m_task_send = nullptr;
+    m_task_recv = nullptr;
 }
 
 bool Protocol::is_possessed() const {
-    xSemaphoreTake(m_mutex, portMAX_DELAY);
-    bool res = m_possessed_addr.sin_port != 0;
-    xSemaphoreGive(m_mutex);
+    m_mutex.lock();
+    bool res = m_possessed_port != 0;
+    m_mutex.unlock();
     return res;
+}
+
+bool Protocol::get_possessed_addr(ip_addr_t *addr, u16_t *port) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if(m_possessed_port == 0)
+        return false;
+    ip_addr_copy(*addr, m_possessed_addr);
+    *port = m_possessed_port;
+    return true;
 }
 
 void Protocol::send_mustarrive(const char *cmd, Object *params) {
@@ -141,15 +106,12 @@ void Protocol::send_mustarrive(const char *cmd, Object *params) {
         params = new Object();
     }
 
-    struct sockaddr_in addr;
-    xSemaphoreTake(m_mutex, portMAX_DELAY);
-    if(m_possessed_addr.sin_port == 0) {
+    struct ip_addr addr;
+    u16_t port;
+    if(!get_possessed_addr(&addr, &port)) {
         ESP_LOGW(TAG, "can't send, the device was not possessed yet.");
-        xSemaphoreGive(m_mutex);
         return;
     }
-    memcpy(&addr, &m_possessed_addr, sizeof(struct sockaddr_in));
-    xSemaphoreGive(m_mutex);
 
     MustArrive mr;
     mr.pkt = params;
@@ -157,30 +119,26 @@ void Protocol::send_mustarrive(const char *cmd, Object *params) {
 
     params->set("c", cmd);
 
-    xSemaphoreTake(m_mustarrive_mutex, portMAX_DELAY);
+    m_mustarrive_mutex.lock();
     mr.id = ++m_mustarrive_e;
     params->set("e", mr.id);
     m_mustarrive_queue.push_back(mr);
-    xSemaphoreGive(m_mustarrive_mutex);
+    m_mustarrive_mutex.unlock();
 
-    send(&addr, params);
+    send(&addr, port, params);
 }
 
 void Protocol::send(const char *cmd, Object *obj) {
-    struct sockaddr_in addr;
-    xSemaphoreTake(m_mutex, portMAX_DELAY);
-    if(m_possessed_addr.sin_port == 0) {
+    struct ip_addr addr;
+    u16_t port;
+    if(!get_possessed_addr(&addr, &port)) {
         ESP_LOGW(TAG, "can't send, the device was not possessed yet.");
-        xSemaphoreGive(m_mutex);
         return;
     }
-    memcpy(&addr, &m_possessed_addr, sizeof(struct sockaddr_in));
-    xSemaphoreGive(m_mutex);
-
-    send(&addr, cmd, obj);
+    send(&addr, port, cmd, obj);
 }
 
-void Protocol::send(struct sockaddr_in *addr, const char *cmd, Object *obj) {
+void Protocol::send(const ip_addr_t *addr, u16_t port, const char *cmd, Object *obj) {
     std::unique_ptr<Object> autoptr;
     if(obj == NULL) {
         obj = new Object();
@@ -188,120 +146,166 @@ void Protocol::send(struct sockaddr_in *addr, const char *cmd, Object *obj) {
     }
 
     obj->set("c", new String(cmd));
-    send(addr, obj);
+    send(addr, port, obj);
 }
 
-void Protocol::send(struct sockaddr_in *addr, Object *obj) {
-    xSemaphoreTake(m_mutex, portMAX_DELAY);
+void Protocol::send(const ip_addr_t *addr, u16_t port, Object *obj) {
+    m_mutex.lock();
     int n = m_write_counter++;
-    xSemaphoreGive(m_mutex);
+    m_mutex.unlock();
 
     obj->set("n", new Number(n));
     auto str = obj->str();
-    send(addr, str.c_str(), str.size());
+    send(addr, port, str.c_str(), str.size());
 }
 
-void Protocol::send(struct sockaddr_in *addr, const char *buf) {
-    send(addr, buf, strlen(buf));
+void Protocol::send(const ip_addr_t *addr, u16_t port, const char *buf) {
+    send(addr, port, buf, strlen(buf));
 }
 
-void Protocol::send(struct sockaddr_in *addr, const char *buf, size_t size) {
-    xSemaphoreTake(m_mutex, portMAX_DELAY);
-    int socket = m_socket;
-    xSemaphoreGive(m_mutex);
+void Protocol::send(const ip_addr_t *addr, u16_t port, const char *buf, size_t size) {
+    SendQueueItem it;
+    ip_addr_copy(it.addr, *addr);
+    it.port = port;
+    it.buf = pbuf_alloc(PBUF_TRANSPORT, size, PBUF_RAM);
+    pbuf_take(it.buf, buf, size);
 
-    if(m_socket == -1) {
-        return;
-    }
-
-    int res = ::sendto(socket, buf, size, 0, (struct sockaddr*)addr, sizeof(struct sockaddr_in));
-    while(res < 0 && (errno = EAGAIN || errno == EWOULDBLOCK)) {
-        vTaskDelay(1);
-        res = ::sendto(socket, buf, size, 0, (struct sockaddr*)addr, sizeof(struct sockaddr_in));
-    }
-
-    if(res < 0) {
-        ESP_LOGE(TAG, "failed to send message %.*s: %s", size, buf, strerror(errno));
+    if(xQueueSend(m_sendQueue, &it, 200 / portTICK_PERIOD_MS) != pdTRUE) {
+        ESP_LOGE(TAG, "failed to send - queue full!");
     }
 }
 
 void Protocol::send_log(const char *fmt, ...) {
-    char buf[512];
+    char static_buf[128];
+    std::unique_ptr<char[]> dyn_buf;
+    char *used_buf = static_buf;
 
     va_list args;
     va_start(args, fmt);
-    vsnprintf(buf, sizeof(buf), fmt, args);
+    int fmt_len = vsnprintf(static_buf, sizeof(static_buf), fmt, args);
+    if(fmt_len >= sizeof(static_buf)) {
+        dyn_buf.reset(new char[fmt_len+1]);
+        used_buf = dyn_buf.get();
+        vsnprintf(dyn_buf.get(), fmt_len+1, fmt, args);
+    }
     va_end(args);
 
     Object *pkt = new Object();
-    pkt->set("msg", buf);
+    pkt->set("msg", used_buf);
     send_mustarrive("log", pkt);
 }
 
-void Protocol::read_task_trampoline(void *ctrl) {
-    ((Protocol*)ctrl)->read_task();
+void Protocol::send_task_trampoline(void *ctrl) {
+    ((Protocol*)ctrl)->send_task();
 }
 
-void Protocol::read_task() {
-    xSemaphoreTake(m_mutex, portMAX_DELAY);
-    int socket = m_socket;
-    xSemaphoreGive(m_mutex);
+void Protocol::send_task() {
+    auto *pcb = udp_new();
 
-    static const int bufsize = 4096;
+    udp_recv(pcb, recv_trampoline, this);
 
-    struct sockaddr_in addr_recv;
-    socklen_t addrlen = sizeof(struct sockaddr_in);
-    char *buf = new char[bufsize];
-    ssize_t read;
+    const auto bind_res = udp_bind(pcb, IP_ADDR_ANY, m_port);
+    if(bind_res != ERR_OK) {
+        ESP_LOGE(TAG, "failed to call udp_bind: %d", (int)bind_res);
+        return;
+    }
 
     uint32_t mustarrive_timer = MUST_ARRIVE_TIMER_PERIOD;
     struct timeval tv_last, tv_now;
     gettimeofday(&tv_last, NULL);
 
+    SendQueueItem it;
+
     while(true) {
-        do {
-            read = recvfrom(socket, buf, bufsize-1, MSG_DONTWAIT, (struct sockaddr*)&addr_recv, &addrlen);
-            if(read > 0) {
-                buf[read] = 0;
-                handle_msg(&addr_recv, buf, read);
-            } else if(errno == EBADF || errno == ENOTCONN) {
-                ESP_LOGI(TAG, "read routine closing due to error");
-                return;
+        while(xQueueReceive(m_sendQueue, &it, 10 / portTICK_PERIOD_MS) == pdTRUE) {
+            if(it.buf == nullptr) {
+                goto exit;
             }
-        } while(read > 0);
+
+            const auto send_res = udp_sendto(pcb, it.buf, &it.addr, it.port);
+            if(send_res != ERR_OK) {
+                ESP_LOGE(TAG, "error in udp_sendto: %d!", int(send_res));
+            }
+            pbuf_free(it.buf);
+        }
 
         gettimeofday(&tv_now, NULL);
         uint32_t diff = diff_ms(tv_now, tv_last);
         memcpy(&tv_last, &tv_now, sizeof(struct timeval));
 
         if(mustarrive_timer <= diff) {
-            xSemaphoreTake(m_mustarrive_mutex, portMAX_DELAY);
+            m_mustarrive_mutex.lock();
             if(m_mustarrive_queue.size() != 0) {
-                struct sockaddr_in addr;
-                xSemaphoreTake(m_mutex, portMAX_DELAY);
-                memcpy(&addr, &m_possessed_addr, sizeof(struct sockaddr_in));
-                xSemaphoreGive(m_mutex);
-                for(auto itr = m_mustarrive_queue.begin(); itr != m_mustarrive_queue.end(); ) {
-                    send(&addr, (*itr).pkt);
-                    if((*itr).attempts != -1 && ++(*itr).attempts >= MUST_ARRIVE_ATTEMPTS) {
-                        delete (*itr).pkt;
-                        itr = m_mustarrive_queue.erase(itr);
-                    } else {
-                        ++itr;
-                    }
-                }
+                resend_mustarrive_locked();
             }
-            xSemaphoreGive(m_mustarrive_mutex);
+            m_mustarrive_mutex.unlock();
             mustarrive_timer = MUST_ARRIVE_TIMER_PERIOD;
         } else {
             mustarrive_timer -= diff;
         }
+    }
 
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+exit:
+    udp_disconnect(pcb);
+    udp_remove(pcb);
+
+    vTaskDelete(nullptr);
+}
+
+void Protocol::resend_mustarrive_locked() {
+    struct ip_addr addr;
+    u16_t port;
+
+    m_mutex.lock();
+    ip_addr_copy(addr, m_possessed_addr);
+    port = m_possessed_port;
+    m_mutex.unlock();
+
+    for(auto itr = m_mustarrive_queue.begin(); itr != m_mustarrive_queue.end(); ) {
+        send(&addr, port, (*itr).pkt);
+        if((*itr).attempts != -1 && ++(*itr).attempts >= MUST_ARRIVE_ATTEMPTS) {
+            delete (*itr).pkt;
+            itr = m_mustarrive_queue.erase(itr);
+        } else {
+            ++itr;
+        }
     }
 }
 
-void Protocol::handle_msg(struct sockaddr_in *addr, char *buf, ssize_t size) {
+void Protocol::recv_trampoline(void *ctrl, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port) {
+    RecvQueueItem it;
+    it.port = port;
+    ip_addr_copy(it.addr, *addr);
+
+    it.size = p->tot_len;
+    it.buf = (char*)malloc(it.size);
+    pbuf_copy_partial(p, it.buf, it.size, 0);
+    pbuf_free(p);
+
+    if(xQueueSend(((Protocol*)ctrl)->m_recvQueue, &it, 200 / portTICK_PERIOD_MS) != pdTRUE) {
+        ESP_LOGE(TAG, "failed to recv - queue full!");
+    }
+}
+
+void Protocol::recv_task_trampoline(void *ctrl) {
+    ((Protocol*)ctrl)->recv_task();
+}
+
+void Protocol::recv_task() {
+    RecvQueueItem it;
+    while(true) {
+        if(xQueueReceive(m_recvQueue, &it, portMAX_DELAY) == pdTRUE) {
+            if(it.buf == nullptr)
+                break;
+            handle_msg(&it.addr, it.port, it.buf, it.size);
+            free(it.buf);
+        }
+    }
+
+    vTaskDelete(nullptr);
+}
+
+void Protocol::handle_msg(const ip_addr_t *addr, u16_t port, char *buf, ssize_t size) {
     std::unique_ptr<Object> pkt(parse(buf, size));
     if(!pkt) {
         ESP_LOGE(TAG, "failed to parse the packet's json");
@@ -320,7 +324,7 @@ void Protocol::handle_msg(struct sockaddr_in *addr, char *buf, ssize_t size) {
         res->set("desc", m_desc);
 
         const auto str = res->str();
-        send(addr, str.c_str(), str.size());
+        send(addr, port, str.c_str(), str.size());
         return;
     }
 
@@ -332,9 +336,9 @@ void Protocol::handle_msg(struct sockaddr_in *addr, char *buf, ssize_t size) {
     int counter = pkt->getInt("n");
     if(counter == -1) {
         m_read_counter = 0;
-        xSemaphoreTake(m_mutex, portMAX_DELAY);
+        m_mutex.lock();
         m_write_counter = 0;
-        xSemaphoreGive(m_mutex);
+        m_mutex.unlock();
     } else if(counter < m_read_counter && m_read_counter - counter < 300) {
         return;
     } else {
@@ -342,24 +346,25 @@ void Protocol::handle_msg(struct sockaddr_in *addr, char *buf, ssize_t size) {
     }
 
     if(pkt->contains("f")) {
-        send(addr, pkt.get());
+        send(addr, port, pkt.get());
 
         if(cmd == "possess") {
-            xSemaphoreTake(m_mutex, portMAX_DELAY);
-            bool different = memcmp(&m_possessed_addr, addr, sizeof(struct sockaddr_in));
+            m_mutex.lock();
+            bool different = ip_addr_cmp(&m_possessed_addr, addr) != 0 || m_possessed_port != port;
             if(different) {
-                memcpy(&m_possessed_addr, addr, sizeof(struct sockaddr_in));
+                ip_addr_copy(m_possessed_addr, *addr);
+                m_possessed_port = port;
                 m_mustarrive_e = 0;
                 m_mustarrive_f = 0;
             }
-            xSemaphoreGive(m_mutex);
+            m_mutex.unlock();
 
-            xSemaphoreTake(m_mustarrive_mutex, portMAX_DELAY);
+            m_mustarrive_mutex.lock();
             for(auto it : m_mustarrive_queue) {
                 delete it.pkt;
             }
             m_mustarrive_queue.clear();
-            xSemaphoreGive(m_mustarrive_mutex);
+            m_mustarrive_mutex.unlock();
         }
 
         int f = pkt->getInt("f");
@@ -370,7 +375,7 @@ void Protocol::handle_msg(struct sockaddr_in *addr, char *buf, ssize_t size) {
         }
     } else if(pkt->contains("e")) {
         int e = pkt->getInt("e");
-        xSemaphoreTake(m_mustarrive_mutex, portMAX_DELAY);
+        m_mustarrive_mutex.lock();
         for(auto itr = m_mustarrive_queue.begin(); itr != m_mustarrive_queue.end(); ++itr) {
             if((*itr).id == e) {
                 delete (*itr).pkt;
@@ -378,7 +383,7 @@ void Protocol::handle_msg(struct sockaddr_in *addr, char *buf, ssize_t size) {
                 break;
             }
         }
-        xSemaphoreGive(m_mustarrive_mutex);
+        m_mustarrive_mutex.unlock();
         return;
     }
 

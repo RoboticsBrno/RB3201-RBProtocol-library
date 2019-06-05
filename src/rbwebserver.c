@@ -20,9 +20,10 @@
 
 #define WORKING_DIRECTORY "/spiffs"
 
-#define LISTENQ  1024  /* second argument to listen() */
-#define MAXLINE 1024   /* max length of a line */
-#define RIO_BUFSIZE 1024
+#define LISTENQ  64  /* second argument to listen() */
+#define MAXLINE 256   /* max length of a line */
+#define RIO_BUFSIZE 256
+#define FILENAME_SIZE 64
 
 typedef struct {
     int rio_fd;                 /* descriptor for this buf */
@@ -35,7 +36,7 @@ typedef struct {
 typedef struct sockaddr SA;
 
 typedef struct {
-    char filename[512];
+    char filename[FILENAME_SIZE];
     off_t offset;              /* for support Range */
     size_t end;
 } http_request;
@@ -194,7 +195,7 @@ int open_listenfd(int port){
 void url_decode(char* src, char* dest, int max) {
     char *p = src;
 
-    int prefix_len = snprintf(dest, 512, "%s/", WORKING_DIRECTORY);
+    int prefix_len = snprintf(dest, FILENAME_SIZE, "%s/", WORKING_DIRECTORY);
     dest += prefix_len;
 
     char code[3] = { 0 };
@@ -246,9 +247,8 @@ void parse_request(int fd, http_request *req){
     url_decode(filename, req->filename, MAXLINE);
 }
 
-
 void log_access(int status, struct sockaddr_in *c_addr, http_request *req){
-    ESP_LOGI(TAG, "%s:%d %d - %s\n", inet_ntoa(c_addr->sin_addr),
+    ESP_LOGI(TAG, "%s:%d %d - %s", inet_ntoa(c_addr->sin_addr),
            ntohs(c_addr->sin_port), status, req->filename);
 }
 
@@ -270,7 +270,7 @@ static ssize_t sendfile(int out_fd, int in_fd, off_t *offset, size_t count) {
         chunk = count;
         if(chunk > sizeof(buf))
             chunk = sizeof(buf);
-        
+
         chunk_res = read(in_fd, buf, chunk);
         if(chunk_res < 0) {
             return -1;
@@ -317,7 +317,7 @@ void serve_static(int out_fd, int in_fd, http_request *req,
 }
 
 void process(int fd, struct sockaddr_in *clientaddr){
-    ESP_LOGD(TAG, "accept request, fd is %d, pid is %d\n", fd, getpid());
+    ESP_LOGD(TAG, "accept request, fd is %d\n", fd);
     http_request req;
     parse_request(fd, &req);
 
@@ -360,7 +360,7 @@ static void tiny_web_task(void *portPtr) {
       .max_files = 5,
       .format_if_mount_failed = true
     };
-    
+
     esp_err_t ret = esp_vfs_spiffs_register(&conf);
     if (ret != ESP_OK) {
         if (ret == ESP_FAIL) {
@@ -394,14 +394,15 @@ static void tiny_web_task(void *portPtr) {
             close(connfd);
         } else if(errno != EWOULDBLOCK && errno != EAGAIN) {
             ESP_LOGE(TAG, "failed to accept: %s", strerror(errno));
-            return;
         }
 
         vTaskDelay(50 / portTICK_PERIOD_MS);
     }
 }
 
-void rb_web_start(int port) {
-    xTaskCreate(&tiny_web_task, "rbctrl_web", 8192, (void*)port, 1, NULL);
+TaskHandle_t rb_web_start(int port) {
+    TaskHandle_t task;
+    xTaskCreate(&tiny_web_task, "rbctrl_web", 3072, (void*)port, 3, &task);
+    return task;
 }
 
