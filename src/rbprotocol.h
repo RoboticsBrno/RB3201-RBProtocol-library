@@ -26,12 +26,13 @@ class Protocol;
  */
 class Protocol {
 public:
+    typedef std::function<void(const std::string& cmd, rbjson::Object* pkt)> callback_t;
+
     /**
      * The onPacketReceivedCallback is called when a packet arrives.
      * It runs on a separate task, only single packet is processed at a time.
      */
-    Protocol(const char *owner, const char *name, const char *description,
-        std::function<void(const std::string& cmd, rbjson::Object* pkt)> callback = nullptr);
+    Protocol(const char *owner, const char *name, const char *description, callback_t callback = nullptr);
     ~Protocol();
 
     void start(u16_t port = RBPROTOCOL_PORT); //!< Start listening for UDP packets on port
@@ -101,7 +102,7 @@ private:
     const char *m_name;
     const char *m_desc;
 
-    std::function<void(const std::string& cmd, rbjson::Object* pkt)> m_callback;
+    callback_t m_callback;
 
     TaskHandle_t m_task_send;
     TaskHandle_t m_task_recv;
