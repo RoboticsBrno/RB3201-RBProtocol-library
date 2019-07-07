@@ -30,8 +30,7 @@ static int diff_ms(timeval& t1, timeval& t2) {
 
 namespace rb {
 
-Protocol::Protocol(const char *owner, const char *name, const char *description,
-    std::function<void(const std::string& cmd, rbjson::Object* pkt)> callback) {
+Protocol::Protocol(const char *owner, const char *name, const char *description, Protocol::callback_t callback) {
     m_owner = owner;
     m_name = name;
     m_desc = description;
@@ -176,19 +175,23 @@ void Protocol::send(const ip_addr_t *addr, u16_t port, const char *buf, size_t s
 }
 
 void Protocol::send_log(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    send_log(fmt, args);
+    va_end(args);
+}
+
+void Protocol::send_log(const char *fmt, va_list args) {
     char static_buf[128];
     std::unique_ptr<char[]> dyn_buf;
     char *used_buf = static_buf;
 
-    va_list args;
-    va_start(args, fmt);
     int fmt_len = vsnprintf(static_buf, sizeof(static_buf), fmt, args);
     if(fmt_len >= sizeof(static_buf)) {
         dyn_buf.reset(new char[fmt_len+1]);
         used_buf = dyn_buf.get();
         vsnprintf(dyn_buf.get(), fmt_len+1, fmt, args);
     }
-    va_end(args);
 
     Object *pkt = new Object();
     pkt->set("msg", used_buf);
