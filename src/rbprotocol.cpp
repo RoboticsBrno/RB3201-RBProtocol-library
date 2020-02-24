@@ -109,6 +109,7 @@ void Protocol::send_mustarrive(const char *cmd, Object *params) {
     u16_t port;
     if(!get_possessed_addr(&addr, &port)) {
         ESP_LOGW(TAG, "can't send, the device was not possessed yet.");
+        delete params;
         return;
     }
 
@@ -122,6 +123,7 @@ void Protocol::send_mustarrive(const char *cmd, Object *params) {
     mr.id = ++m_mustarrive_e;
     params->set("e", mr.id);
     m_mustarrive_queue.push_back(mr);
+
     m_mustarrive_mutex.unlock();
 
     send(&addr, port, params);
@@ -182,7 +184,7 @@ void Protocol::send_log(const char *fmt, ...) {
 }
 
 void Protocol::send_log(const char *fmt, va_list args) {
-    char static_buf[128];
+    char static_buf[256];
     std::unique_ptr<char[]> dyn_buf;
     char *used_buf = static_buf;
 
@@ -203,6 +205,10 @@ void Protocol::send_task_trampoline(void *ctrl) {
 }
 
 void Protocol::send_task() {
+    uint32_t mustarrive_timer = MUST_ARRIVE_TIMER_PERIOD;
+    struct timeval tv_last, tv_now;
+    SendQueueItem it;
+
     auto *pcb = udp_new();
 
     udp_recv(pcb, recv_trampoline, this);
@@ -210,14 +216,10 @@ void Protocol::send_task() {
     const auto bind_res = udp_bind(pcb, IP_ADDR_ANY, m_port);
     if(bind_res != ERR_OK) {
         ESP_LOGE(TAG, "failed to call udp_bind: %d", (int)bind_res);
-        return;
+        goto exit;
     }
 
-    uint32_t mustarrive_timer = MUST_ARRIVE_TIMER_PERIOD;
-    struct timeval tv_last, tv_now;
     gettimeofday(&tv_last, NULL);
-
-    SendQueueItem it;
 
     while(true) {
         while(xQueueReceive(m_sendQueue, &it, 10 / portTICK_PERIOD_MS) == pdTRUE) {
@@ -233,7 +235,7 @@ void Protocol::send_task() {
         }
 
         gettimeofday(&tv_now, NULL);
-        uint32_t diff = diff_ms(tv_now, tv_last);
+        const uint32_t diff = diff_ms(tv_now, tv_last);
         memcpy(&tv_last, &tv_now, sizeof(struct timeval));
 
         if(mustarrive_timer <= diff) {
