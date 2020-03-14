@@ -6,12 +6,10 @@
 #include <vector>
 #include <mutex>
 #include <functional>
-#include <lwip/ip_addr.h>
+
+#include <lwip/sockets.h>
 
 #include "rbjson.h"
-
-struct udp_pcb;
-struct pbuf;
 
 namespace rb {
 
@@ -36,7 +34,7 @@ public:
     Protocol(const char *owner, const char *name, const char *description, callback_t callback = nullptr);
     ~Protocol();
 
-    void start(u16_t port = RBPROTOCOL_PORT); //!< Start listening for UDP packets on port
+    void start(uint16_t port = RBPROTOCOL_PORT); //!< Start listening for UDP packets on port
     void stop(); //!< Stop listening
 
     /**
@@ -70,35 +68,27 @@ private:
         int16_t attempts;
     };
 
-    struct SendQueueItem {
-        struct ip_addr addr;
-        struct pbuf *buf;
-        u16_t port;
-    };
-
-    struct RecvQueueItem {
-        struct ip_addr addr;
+    struct QueueItem {
+        struct sockaddr_in addr;
         char *buf;
-        u16_t size;
-        u16_t port;
+        uint16_t size;
     };
 
-    bool get_possessed_addr(ip_addr_t *addr, u16_t *port);
+    bool get_possessed_addr(struct sockaddr_in *addr);
 
     static void send_task_trampoline(void *ctrl);
     void send_task();
     void resend_mustarrive_locked();
 
-    static void recv_trampoline(void *ctrl, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
     static void recv_task_trampoline(void *ctrl);
     void recv_task();
 
-    void send(const ip_addr_t *addr, u16_t port, const char *command, rbjson::Object *obj);
-    void send(const ip_addr_t *addr, u16_t port, rbjson::Object *obj);
-    void send(const ip_addr_t *addr, u16_t port, const char *buf);
-    void send(const ip_addr_t *addr, u16_t port, const char *buf, size_t size);
+    void send(const struct sockaddr_in *addr, const char *command, rbjson::Object *obj);
+    void send(const struct sockaddr_in *addr, rbjson::Object *obj);
+    void send(const struct sockaddr_in *addr, const char *buf);
+    void send(const struct sockaddr_in *addr, const char *buf, size_t size);
 
-    void handle_msg(const ip_addr_t *addr, u16_t port, char *buf, ssize_t size);
+    void handle_msg(const struct sockaddr_in *addr, rbjson::Object *pkt);
 
     const char *m_owner;
     const char *m_name;
@@ -109,13 +99,11 @@ private:
     TaskHandle_t m_task_send;
     TaskHandle_t m_task_recv;
 
-    u16_t m_port;
+    int m_socket;
     int m_read_counter;
     int m_write_counter;
-    struct ip_addr m_possessed_addr;
-    u16_t m_possessed_port;
+    struct sockaddr_in m_possessed_addr;
     QueueHandle_t m_sendQueue;
-    QueueHandle_t m_recvQueue;
     mutable std::mutex m_mutex;
 
     uint32_t m_mustarrive_e;

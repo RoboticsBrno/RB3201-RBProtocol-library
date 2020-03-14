@@ -20,7 +20,7 @@
 
 #define WORKING_DIRECTORY "/spiffs"
 
-#define LISTENQ  64  /* second argument to listen() */
+#define LISTENQ  8  /* second argument to listen() */
 #define MAXLINE 256   /* max length of a line */
 #define RIO_BUFSIZE 256
 #define FILENAME_SIZE 64
@@ -197,9 +197,10 @@ void url_decode(char* src, char* dest, int max) {
 
     int prefix_len = snprintf(dest, FILENAME_SIZE, "%s/", WORKING_DIRECTORY);
     dest += prefix_len;
+    max -= prefix_len;
 
     char code[3] = { 0 };
-    while(*p && --max) {
+    while(*p && --max > 0) {
         if(*p == '%') {
             memcpy(code, ++p, 2);
             *dest++ = (char)strtoul(code, NULL, 16);
@@ -244,7 +245,7 @@ void parse_request(int fd, http_request *req){
             }
         }
     }
-    url_decode(filename, req->filename, MAXLINE);
+    url_decode(filename, req->filename, FILENAME_SIZE);
 }
 
 void log_access(int status, struct sockaddr_in *c_addr, http_request *req){
@@ -289,18 +290,17 @@ void serve_static(int out_fd, int in_fd, http_request *req,
                   size_t total_size){
     char buf[256];
     if (req->offset > 0){
-        sprintf(buf, "HTTP/1.1 206 Partial\r\n");
-        sprintf(buf + strlen(buf), "Content-Range: bytes %ld-%u/%u\r\n",
+        snprintf(buf, sizeof(buf), "HTTP/1.1 206 Partial\r\nContent-Range: bytes %ld-%u/%u\r\n",
                 req->offset, req->end, total_size);
     } else {
-        sprintf(buf, "HTTP/1.1 200 OK\r\nAccept-Ranges: bytes\r\n");
+        snprintf(buf, sizeof(buf), "HTTP/1.1 200 OK\r\nAccept-Ranges: bytes\r\n");
     }
-    sprintf(buf + strlen(buf), "Cache-Control: no-cache\r\n");
+    snprintf(buf + strlen(buf), sizeof(buf)-strlen(buf) - 1, "Cache-Control: no-cache\r\n");
     // sprintf(buf + strlen(buf), "Cache-Control: public, max-age=315360000\r\nExpires: Thu, 31 Dec 2037 23:55:55 GMT\r\n");
 
-    sprintf(buf + strlen(buf), "Content-length: %lu\r\n",
+    snprintf(buf + strlen(buf), sizeof(buf)-strlen(buf) - 1, "Content-length: %lu\r\n",
             req->end - req->offset);
-    sprintf(buf + strlen(buf), "Content-type: %s\r\n\r\n",
+    snprintf(buf + strlen(buf), sizeof(buf)-strlen(buf) - 1, "Content-type: %s\r\n\r\n",
             get_mime_type(req->filename));
 
     writen(out_fd, buf, strlen(buf));
