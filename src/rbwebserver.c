@@ -353,25 +353,6 @@ static void tiny_web_task(void *portPtr) {
     int listenfd, connfd;
     socklen_t clientlen = sizeof clientaddr;
 
-    esp_vfs_spiffs_conf_t conf = {
-      .base_path = WORKING_DIRECTORY,
-      .partition_label = NULL,
-      .max_files = 5,
-      .format_if_mount_failed = true
-    };
-
-    esp_err_t ret = esp_vfs_spiffs_register(&conf);
-    if (ret != ESP_OK) {
-        if (ret == ESP_FAIL) {
-            ESP_LOGE(TAG, "Failed to mount or format filesystem");
-        } else if (ret == ESP_ERR_NOT_FOUND) {
-            ESP_LOGE(TAG, "Failed to find SPIFFS partition");
-        } else {
-            ESP_LOGE(TAG, "Failed to initialize SPIFFS (%d)", ret);
-        }
-        return;
-    }
-
     listenfd = open_listenfd(port);
     if (listenfd > 0) {
         ESP_LOGI(TAG, "Listening on port %d", port);
@@ -391,16 +372,58 @@ static void tiny_web_task(void *portPtr) {
         if(connfd >= 0) {
             process(connfd, &clientaddr);
             close(connfd);
+            continue;
         } else if(errno != EWOULDBLOCK && errno != EAGAIN) {
             ESP_LOGE(TAG, "failed to accept: %s", strerror(errno));
         }
 
-        vTaskDelay(50 / portTICK_PERIOD_MS);
+        vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }
 
 TaskHandle_t rb_web_start(int port) {
+    {
+        esp_vfs_spiffs_conf_t conf = {
+        .base_path = WORKING_DIRECTORY,
+        .partition_label = NULL,
+        .max_files = 5,
+        .format_if_mount_failed = true
+        };
+
+        esp_err_t ret = esp_vfs_spiffs_register(&conf);
+        if (ret != ESP_OK) {
+            if (ret == ESP_FAIL) {
+                ESP_LOGE(TAG, "Failed to mount or format filesystem");
+            } else if (ret == ESP_ERR_NOT_FOUND) {
+                ESP_LOGE(TAG, "Failed to find SPIFFS partition");
+            } else {
+                ESP_LOGE(TAG, "Failed to initialize SPIFFS (%d)", ret);
+            }
+            return pdFAIL;
+        }
+    }
+
     TaskHandle_t task;
-    xTaskCreate(&tiny_web_task, "rbctrl_web", 3072, (void*)port, 3, &task);
+    xTaskCreate(&tiny_web_task, "rbctrl_web", 3072, (void*)port, 2, &task);
     return task;
+}
+
+esp_err_t rb_web_add_file(const char *filename, const char *data, size_t len) {
+    char buf[256];
+    int fd;
+    esp_err_t res = ESP_OK;
+
+    snprintf(buf, sizeof(buf), "%s/%s", WORKING_DIRECTORY, filename);
+
+    fd = open(buf, O_WRONLY | O_CREAT | O_TRUNC);
+    if(fd < 0) {
+        return ESP_FAIL;
+    }
+
+    if(writen(fd, (void*)data, len) < 0) {
+        res = ESP_FAIL;
+    }
+
+    close(fd);
+    return res;
 }
