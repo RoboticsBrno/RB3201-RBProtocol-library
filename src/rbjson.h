@@ -46,6 +46,10 @@ public:
         return m_type == NIL;
     }
 
+    virtual bool equals(const Value& other) const {
+        return m_type == other.m_type;
+    }
+
 protected:
     type_t m_type;
 };
@@ -63,6 +67,9 @@ public:
     ~Object();
 
     void serialize(std::stringstream& ss) const;
+    bool equals(const Value& other) const;
+
+    void swapData(Object& other);
 
     bool contains(const char *key) const;
 
@@ -94,6 +101,7 @@ public:
     ~Array();
 
     void serialize(std::stringstream& ss) const;
+    bool equals(const Value& other) const;
 
     size_t size() const { return m_items.size(); };
 
@@ -126,6 +134,7 @@ public:
     ~String();
 
     void serialize(std::stringstream& ss) const;
+    bool equals(const Value& other) const;
 
     const std::string& get() const { return m_value; };
 
@@ -142,6 +151,7 @@ public:
     ~Number();
 
     void serialize(std::stringstream& ss) const;
+    bool equals(const Value& other) const;
 
     double get() const { return m_value; };
 
@@ -158,6 +168,7 @@ public:
     ~Bool();
 
     void serialize(std::stringstream& ss) const;
+    bool equals(const Value& other) const;
 
     bool get() const { return m_value; };
 

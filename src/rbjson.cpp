@@ -187,6 +187,26 @@ void Object::serialize(std::stringstream& ss) const {
     ss << '}';
 }
 
+void Object::swapData(Object& other) {
+    m_members.swap(other.m_members);
+}
+
+bool Object::equals(const Value& other) const {
+    if(!Value::equals(other))
+        return false;
+
+    const auto& obj = static_cast<const Object&>(other);
+    if(m_members.size() != obj.m_members.size())
+        return false;
+
+    for(const auto& pair : m_members) {
+        const auto itr = obj.m_members.find(pair.first);
+        if(itr == obj.m_members.end() || !itr->second->equals(*pair.second))
+            return false;
+    }
+    return true;
+}
+
 bool Object::contains(const char *key) const {
     return m_members.find(key) != m_members.end();
 }
@@ -301,6 +321,21 @@ void Array::serialize(std::stringstream& ss) const {
     ss << ']';
 }
 
+bool Array::equals(const Value& other) const {
+    if(!Value::equals(other))
+        return false;
+
+    const auto& array = static_cast<const Array&>(other);
+    if(m_items.size() != array.m_items.size())
+        return false;
+
+    for(size_t i = 0; i < m_items.size(); ++i) {
+        if(!m_items[i]->equals(*array.m_items[i]))
+            return false;
+    }
+    return true;
+}
+
 Value *Array::get(size_t idx) const {
     if(idx < m_items.size())
         return m_items[idx];
@@ -393,6 +428,14 @@ void String::serialize(std::stringstream& ss) const {
     write_string_escaped(m_value.c_str(), ss);
 }
 
+bool String::equals(const Value& other) const {
+    if(!Value::equals(other))
+        return false;
+
+    const auto& str = static_cast<const String&>(other);
+    return m_value == str.m_value;
+}
+
 Number::Number(double value) : Value(NUMBER), m_value(value) {
 
 }
@@ -411,6 +454,14 @@ void Number::serialize(std::stringstream& ss) const {
     }
 }
 
+bool Number::equals(const Value& other) const {
+    if(!Value::equals(other))
+        return false;
+
+    const auto& num = static_cast<const Number&>(other);
+    return m_value == num.m_value;
+}
+
 Bool::Bool(bool value) : Value(BOOL), m_value(value) {
 
 }
@@ -425,6 +476,14 @@ void Bool::serialize(std::stringstream& ss) const {
     } else {
         ss << "false";
     }
+}
+
+bool Bool::equals(const Value& other) const {
+    if(!Value::equals(other))
+        return false;
+
+    const auto& boolean = static_cast<const Bool&>(other);
+    return m_value == boolean.m_value;
 }
 
 void Nil::serialize(std::stringstream& ss) const {
