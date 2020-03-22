@@ -207,6 +207,15 @@ bool Object::equals(const Value& other) const {
     return true;
 }
 
+Value *Object::copy() const {
+    auto *res = new Object();
+    res->m_members.reserve(m_members.size());
+    for(const auto& pair : m_members) {
+        res->m_members[pair.first] = pair.second->copy();
+    }
+    return res;
+}
+
 bool Object::contains(const char *key) const {
     return m_members.find(key) != m_members.end();
 }
@@ -336,6 +345,15 @@ bool Array::equals(const Value& other) const {
     return true;
 }
 
+Value *Array::copy() const {
+    auto *res = new Array();
+    res->m_items.reserve(m_items.size());
+    for(const auto& it : m_items) {
+        res->m_items.push_back(it->copy());
+    }
+    return res;
+}
+
 Value *Array::get(size_t idx) const {
     if(idx < m_items.size())
         return m_items[idx];
@@ -436,6 +454,10 @@ bool String::equals(const Value& other) const {
     return m_value == str.m_value;
 }
 
+Value *String::copy() const {
+    return new String(m_value);
+}
+
 Number::Number(double value) : Value(NUMBER), m_value(value) {
 
 }
@@ -462,6 +484,10 @@ bool Number::equals(const Value& other) const {
     return m_value == num.m_value;
 }
 
+Value *Number::copy() const {
+    return new Number(m_value);
+}
+
 Bool::Bool(bool value) : Value(BOOL), m_value(value) {
 
 }
@@ -486,9 +512,18 @@ bool Bool::equals(const Value& other) const {
     return m_value == boolean.m_value;
 }
 
+Value *Bool::copy() const {
+    return new Bool(m_value);
+}
+
 void Nil::serialize(std::stringstream& ss) const {
     ss << "null";
 }
+
+Value *Nil::copy() const {
+    return new Nil();
+}
+
 
 
 };

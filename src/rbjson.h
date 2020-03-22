@@ -50,6 +50,8 @@ public:
         return m_type == other.m_type;
     }
 
+    virtual Value *copy() const = 0;
+
 protected:
     type_t m_type;
 };
@@ -68,10 +70,12 @@ public:
 
     void serialize(std::stringstream& ss) const;
     bool equals(const Value& other) const;
+    Value *copy() const;
 
     void swapData(Object& other);
 
     bool contains(const char *key) const;
+    const std::unordered_map<std::string, Value*>& members() const { return m_members; }
 
     Value *get(const char *key) const;
     Object *getObject(const char *key) const;
@@ -102,6 +106,7 @@ public:
 
     void serialize(std::stringstream& ss) const;
     bool equals(const Value& other) const;
+    Value *copy() const;
 
     size_t size() const { return m_items.size(); };
 
@@ -135,6 +140,7 @@ public:
 
     void serialize(std::stringstream& ss) const;
     bool equals(const Value& other) const;
+    Value *copy() const;
 
     const std::string& get() const { return m_value; };
 
@@ -152,6 +158,7 @@ public:
 
     void serialize(std::stringstream& ss) const;
     bool equals(const Value& other) const;
+    Value *copy() const;
 
     double get() const { return m_value; };
 
@@ -169,6 +176,7 @@ public:
 
     void serialize(std::stringstream& ss) const;
     bool equals(const Value& other) const;
+    Value *copy() const;
 
     bool get() const { return m_value; };
 
@@ -182,6 +190,7 @@ private:
 class Nil : public Value {
 public:
     void serialize(std::stringstream& ss) const;
+    Value *copy() const;
 };
 
 };
