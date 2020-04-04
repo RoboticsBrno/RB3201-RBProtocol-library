@@ -354,7 +354,7 @@ exit:
 }
 
 void Protocol::handle_msg(const struct sockaddr_in *addr, rbjson::Object *pkt) {
-    auto cmd = pkt->getString("c");
+    const auto cmd = pkt->getString("c");
 
     if(cmd == "discover") {
         std::unique_ptr<Object> res(new Object());
@@ -373,7 +373,7 @@ void Protocol::handle_msg(const struct sockaddr_in *addr, rbjson::Object *pkt) {
         return;
     }
 
-    int counter = pkt->getInt("n");
+    const int counter = pkt->getInt("n");
     if(counter == -1) {
         m_read_counter = 0;
         m_mutex.lock();
@@ -397,9 +397,9 @@ void Protocol::handle_msg(const struct sockaddr_in *addr, rbjson::Object *pkt) {
             m_mutex.lock();
             if(m_possessed_addr.sin_addr.s_addr != addr->sin_addr.s_addr || m_possessed_addr.sin_port != addr->sin_port) {
                 memcpy(&m_possessed_addr, addr, sizeof(struct sockaddr_in));
-                m_mustarrive_e = 0;
-                m_mustarrive_f = 0;
             }
+            m_mustarrive_e = 0;
+            m_mustarrive_f = 0;
             m_mutex.unlock();
 
             m_mustarrive_mutex.lock();
