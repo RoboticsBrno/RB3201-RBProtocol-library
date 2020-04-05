@@ -12,4 +12,4 @@ extern "C" TaskHandle_t rb_web_start(int port);
 /**
  * \brief Adds another file into the web server's root.
  */
-extern "C" esp_err_t rb_web_add_file(const char *filename, const char *data, size_t len);
+extern "C" esp_err_t rb_web_add_file(const char* filename, const char* data, size_t len);

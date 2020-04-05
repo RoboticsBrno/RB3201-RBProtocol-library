@@ -1,8 +1,8 @@
 #pragma once
 
+#include <sstream>
 #include <unordered_map>
 #include <vector>
-#include <sstream>
 
 /**
  * \brief JSON-related objects
@@ -14,7 +14,7 @@ class Object;
 /**
  * \brief Parse a JSON string to an object.
  */
-Object *parse(char *buf, size_t size);
+Object* parse(char* buf, size_t size);
 
 /**
  * \brief Base JSON value class, not instanceable.
@@ -50,7 +50,7 @@ public:
         return m_type == other.m_type;
     }
 
-    virtual Value *copy() const = 0;
+    virtual Value* copy() const = 0;
 
 protected:
     type_t m_type;
@@ -63,34 +63,34 @@ class Array;
  */
 class Object : public Value {
 public:
-    static Object *parse(char *buf, size_t size);
+    static Object* parse(char* buf, size_t size);
 
     Object();
     ~Object();
 
     void serialize(std::stringstream& ss) const;
     bool equals(const Value& other) const;
-    Value *copy() const;
+    Value* copy() const;
 
     void swapData(Object& other);
 
-    bool contains(const char *key) const;
+    bool contains(const char* key) const;
     const std::unordered_map<std::string, Value*>& members() const { return m_members; }
 
-    Value *get(const char *key) const;
-    Object *getObject(const char *key) const;
-    Array *getArray(const char *key) const;
-    std::string getString(const char *key, std::string def = "") const;
-    int64_t getInt(const char *key, int64_t def = 0) const;
-    double getDouble(const char *key, double def = 0.0) const;
-    bool getBool(const char *key, bool def = false) const;
+    Value* get(const char* key) const;
+    Object* getObject(const char* key) const;
+    Array* getArray(const char* key) const;
+    std::string getString(const char* key, std::string def = "") const;
+    int64_t getInt(const char* key, int64_t def = 0) const;
+    double getDouble(const char* key, double def = 0.0) const;
+    bool getBool(const char* key, bool def = false) const;
 
-    void set(const char *key, Value *value);
-    void set(const char *key, const char *string);
-    void set(const char *key, const std::string& str);
-    void set(const char *key, double number);
+    void set(const char* key, Value* value);
+    void set(const char* key, const char* string);
+    void set(const char* key, const std::string& str);
+    void set(const char* key, double number);
 
-    void remove(const char *key);
+    void remove(const char* key);
 
 private:
     std::unordered_map<std::string, Value*> m_members;
@@ -106,21 +106,21 @@ public:
 
     void serialize(std::stringstream& ss) const;
     bool equals(const Value& other) const;
-    Value *copy() const;
+    Value* copy() const;
 
     size_t size() const { return m_items.size(); };
 
-    Value *get(size_t idx) const;
-    Object *getObject(size_t idx) const;
-    Array *getArray(size_t idx) const;
+    Value* get(size_t idx) const;
+    Object* getObject(size_t idx) const;
+    Array* getArray(size_t idx) const;
     std::string getString(size_t idx, std::string def = "") const;
     int64_t getInt(size_t idx, int64_t def = 0) const;
     double getDouble(size_t idx, double def = 0.0) const;
     bool getBool(size_t idx, bool def = false) const;
 
-    void set(size_t idx, Value *value);
-    void insert(size_t idx, Value *value);
-    void push_back(Value *value) {
+    void set(size_t idx, Value* value);
+    void insert(size_t idx, Value* value);
+    void push_back(Value* value) {
         insert(m_items.size(), value);
     }
     void remove(size_t idx);
@@ -134,13 +134,13 @@ private:
  */
 class String : public Value {
 public:
-    explicit String(const char *value = "");
+    explicit String(const char* value = "");
     explicit String(const std::string& value);
     ~String();
 
     void serialize(std::stringstream& ss) const;
     bool equals(const Value& other) const;
-    Value *copy() const;
+    Value* copy() const;
 
     const std::string& get() const { return m_value; };
 
@@ -158,7 +158,7 @@ public:
 
     void serialize(std::stringstream& ss) const;
     bool equals(const Value& other) const;
-    Value *copy() const;
+    Value* copy() const;
 
     double get() const { return m_value; };
 
@@ -176,7 +176,7 @@ public:
 
     void serialize(std::stringstream& ss) const;
     bool equals(const Value& other) const;
-    Value *copy() const;
+    Value* copy() const;
 
     bool get() const { return m_value; };
 
@@ -190,7 +190,7 @@ private:
 class Nil : public Value {
 public:
     void serialize(std::stringstream& ss) const;
-    Value *copy() const;
+    Value* copy() const;
 };
 
 };
