@@ -39,6 +39,7 @@ typedef struct {
     char filename[FILENAME_SIZE];
     off_t offset;              /* for support Range */
     size_t end;
+    uint8_t servingGzip;
 } http_request;
 
 typedef struct {
@@ -212,11 +213,38 @@ void url_decode(char* src, char* dest, int max) {
     *dest = '\0';
 }
 
+static int prepare_gzip(http_request *req) {
+    int fd;
+
+    if(req->servingGzip == 0)
+        goto nogzip;
+
+    const int fnlen = strlen(req->filename);
+    if(fnlen < 3 || fnlen + 4 >= FILENAME_SIZE)
+        goto nogzip;
+
+    if(memcmp(req->filename + fnlen - 3, ".gz", 3) == 0)
+        goto nogzip;
+
+    memcpy(req->filename + fnlen, ".gz", 4);
+
+    fd = open(req->filename, O_RDONLY);
+    req->filename[fnlen] = 0;
+    if(fd >= 0) {
+        return fd;
+    }
+
+nogzip:
+    req->servingGzip = 0;
+    return open(req->filename, O_RDONLY);
+}
+
 void parse_request(int fd, http_request *req){
     rio_t rio;
     char buf[MAXLINE], method[MAXLINE], uri[MAXLINE];
     req->offset = 0;
     req->end = 0;              /* default */
+    req->servingGzip = 0;
 
     rio_readinitb(&rio, fd);
     rio_readlineb(&rio, buf, MAXLINE);
@@ -228,6 +256,8 @@ void parse_request(int fd, http_request *req){
             sscanf(buf, "Range: bytes=%ld-%u", &req->offset, &req->end);
             // Range: [start, end]
             if( req->end != 0) req->end ++;
+        } else if(strstr(buf, "Accept-Encoding: ") == buf && strstr(buf+17, "gzip")) {
+            req->servingGzip = 1;
         }
     }
     char* filename = uri;
@@ -266,6 +296,11 @@ static ssize_t sendfile(char *buf, const size_t bufsize, int out_fd, int in_fd, 
     size_t chunk;
     ssize_t res;
     ssize_t chunk_res;
+
+    if(*offset != 0 && lseek(in_fd, *offset, SEEK_SET) < 0) {
+        ESP_LOGE(TAG, "Failed to seek for partial response: %d %s\n", errno, strerror(errno));
+    }
+
     while(count > 0) {
         chunk = count;
         if(chunk > bufsize)
@@ -281,6 +316,7 @@ static ssize_t sendfile(char *buf, const size_t bufsize, int out_fd, int in_fd, 
             return -1;
         }
         res += chunk_res;
+        *offset += chunk_res;
         count -= chunk;
     }
     return res;
@@ -289,19 +325,27 @@ static ssize_t sendfile(char *buf, const size_t bufsize, int out_fd, int in_fd, 
 void serve_static(int out_fd, int in_fd, http_request *req,
                   size_t total_size){
     char buf[256];
+    int buf_len = 0;
     if (req->offset > 0){
-        snprintf(buf, sizeof(buf), "HTTP/1.1 206 Partial\r\nContent-Range: bytes %ld-%u/%u\r\n",
+        buf_len += snprintf(buf, sizeof(buf), "HTTP/1.1 206 Partial\r\nContent-Range: bytes %ld-%u/%u\r\n",
                 req->offset, req->end, total_size);
     } else {
-        snprintf(buf, sizeof(buf), "HTTP/1.1 200 OK\r\nAccept-Ranges: bytes\r\n");
+        buf_len += snprintf(buf, sizeof(buf), "HTTP/1.1 200 OK\r\nAccept-Ranges: bytes\r\n");
     }
-    snprintf(buf + strlen(buf), sizeof(buf)-strlen(buf) - 1, "Cache-Control: no-cache\r\n");
-    // sprintf(buf + strlen(buf), "Cache-Control: public, max-age=315360000\r\nExpires: Thu, 31 Dec 2037 23:55:55 GMT\r\n");
 
-    snprintf(buf + strlen(buf), sizeof(buf)-strlen(buf) - 1, "Content-length: %lu\r\n",
-            req->end - req->offset);
-    snprintf(buf + strlen(buf), sizeof(buf)-strlen(buf) - 1, "Content-type: %s\r\n\r\n",
-            get_mime_type(req->filename));
+    if(req->servingGzip) {
+        buf_len += snprintf(buf + buf_len, sizeof(buf) - buf_len - 1, "Content-Encoding: gzip\r\n");
+    }
+
+    buf_len += snprintf(buf + buf_len, sizeof(buf) - buf_len - 1, "Content-Length: %lu\r\n", req->end - req->offset);
+
+    if(strstr(req->filename, ".json")) {
+        buf_len += snprintf(buf + buf_len, sizeof(buf) - buf_len - 1, "Cache-Control: no-store\r\n");
+    } else {
+        buf_len += snprintf(buf + buf_len, sizeof(buf) - buf_len - 1, "Cache-Control: private,max-age=259200\r\n");
+    }
+
+    buf_len += snprintf(buf + buf_len, sizeof(buf) - buf_len - 1, "Content-Type: %s\r\n\r\n", get_mime_type(req->filename));
 
     writen(out_fd, buf, strlen(buf));
     off_t offset = req->offset; /* copy */
@@ -321,7 +365,8 @@ void process(int fd, struct sockaddr_in *clientaddr){
     parse_request(fd, &req);
 
     struct stat sbuf;
-    int status = 200, ffd = open(req.filename, O_RDONLY, 0);
+    int status = 200;
+    int ffd = prepare_gzip(&req);
     if(ffd <= 0){
         status = 404;
         char *msg = "File not found";
