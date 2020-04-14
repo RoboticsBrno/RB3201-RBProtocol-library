@@ -208,7 +208,6 @@ bool Object::equals(const Value& other) const {
 
 Value* Object::copy() const {
     auto* res = new Object();
-    res->m_members.reserve(m_members.size());
     for (const auto& pair : m_members) {
         res->m_members[pair.first] = pair.second->copy();
     }

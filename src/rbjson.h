@@ -1,7 +1,7 @@
 #pragma once
 
 #include <sstream>
-#include <unordered_map>
+#include <map>
 #include <vector>
 
 /**
@@ -75,7 +75,7 @@ public:
     void swapData(Object& other);
 
     bool contains(const char* key) const;
-    const std::unordered_map<std::string, Value*>& members() const { return m_members; }
+    const std::map<std::string, Value*>& members() const { return m_members; }
 
     Value* get(const char* key) const;
     Object* getObject(const char* key) const;
@@ -93,7 +93,7 @@ public:
     void remove(const char* key);
 
 private:
-    std::unordered_map<std::string, Value*> m_members;
+    std::map<std::string, Value*> m_members;
 };
 
 /**
