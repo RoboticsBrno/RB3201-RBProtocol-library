@@ -214,18 +214,18 @@ Value* Object::copy() const {
     return res;
 }
 
-bool Object::contains(const char* key) const {
+bool Object::contains(const std::string& key) const {
     return m_members.find(key) != m_members.end();
 }
 
-Value* Object::get(const char* key) const {
+Value* Object::get(const std::string& key) const {
     const auto itr = m_members.find(key);
     if (itr == m_members.cend())
         return NULL;
     return itr->second;
 }
 
-Object* Object::getObject(const char* key) const {
+Object* Object::getObject(const std::string& key) const {
     auto* val = get(key);
     if (val && val->getType() == OBJECT) {
         return (Object*)val;
@@ -233,7 +233,7 @@ Object* Object::getObject(const char* key) const {
     return NULL;
 }
 
-Array* Object::getArray(const char* key) const {
+Array* Object::getArray(const std::string& key) const {
     auto* val = get(key);
     if (val && val->getType() == ARRAY) {
         return (Array*)val;
@@ -241,7 +241,7 @@ Array* Object::getArray(const char* key) const {
     return NULL;
 }
 
-std::string Object::getString(const char* key, std::string def) const {
+std::string Object::getString(const std::string& key, std::string def) const {
     auto* val = get(key);
     if (val && val->getType() == STRING) {
         return ((String*)val)->get();
@@ -250,7 +250,7 @@ std::string Object::getString(const char* key, std::string def) const {
     }
 }
 
-int64_t Object::getInt(const char* key, int64_t def) const {
+int64_t Object::getInt(const std::string& key, int64_t def) const {
     auto* val = get(key);
     if (val && val->getType() == NUMBER) {
         return ((Number*)val)->get();
@@ -259,7 +259,7 @@ int64_t Object::getInt(const char* key, int64_t def) const {
     }
 }
 
-double Object::getDouble(const char* key, double def) const {
+double Object::getDouble(const std::string& key, double def) const {
     auto* val = get(key);
     if (val && val->getType() == NUMBER) {
         return ((Number*)val)->get();
@@ -268,7 +268,7 @@ double Object::getDouble(const char* key, double def) const {
     }
 }
 
-bool Object::getBool(const char* key, bool def) const {
+bool Object::getBool(const std::string& key, bool def) const {
     auto* val = get(key);
     if (val && val->getType() == BOOL) {
         return ((Bool*)val)->get();
@@ -277,7 +277,7 @@ bool Object::getBool(const char* key, bool def) const {
     }
 }
 
-void Object::set(const char* key, Value* value) {
+void Object::set(const std::string& key, Value* value) {
     auto itr = m_members.find(key);
     if (itr != m_members.end()) {
         delete itr->second;
@@ -287,19 +287,15 @@ void Object::set(const char* key, Value* value) {
     }
 }
 
-void Object::set(const char* key, const char* string) {
+void Object::set(const std::string& key, const std::string& string) {
     set(key, new String(string));
 }
 
-void Object::set(const char* key, const std::string& str) {
-    set(key, new String(str));
-}
-
-void Object::set(const char* key, double number) {
+void Object::set(const std::string& key, double number) {
     set(key, new Number(number));
 }
 
-void Object::remove(const char* key) {
+void Object::remove(const std::string& key) {
     auto itr = m_members.find(key);
     if (itr != m_members.end()) {
         delete itr->second;

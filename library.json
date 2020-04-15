@@ -14,7 +14,7 @@
       "maintainer": true
     }
   ],
-  "version": "9.0.1",
+  "version": "10.0.0",
   "frameworks": ["espidf", "arduino"],
   "platforms": "espressif32"
 }

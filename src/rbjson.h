@@ -1,7 +1,7 @@
 #pragma once
 
-#include <sstream>
 #include <map>
+#include <sstream>
 #include <vector>
 
 /**
@@ -21,7 +21,7 @@ Object* parse(char* buf, size_t size);
  */
 class Value {
 public:
-    enum type_t {
+    enum type_t : uint8_t {
         OBJECT,
         ARRAY,
         STRING,
@@ -74,23 +74,22 @@ public:
 
     void swapData(Object& other);
 
-    bool contains(const char* key) const;
+    bool contains(const std::string& key) const;
     const std::map<std::string, Value*>& members() const { return m_members; }
 
-    Value* get(const char* key) const;
-    Object* getObject(const char* key) const;
-    Array* getArray(const char* key) const;
-    std::string getString(const char* key, std::string def = "") const;
-    int64_t getInt(const char* key, int64_t def = 0) const;
-    double getDouble(const char* key, double def = 0.0) const;
-    bool getBool(const char* key, bool def = false) const;
+    Value* get(const std::string& key) const;
+    Object* getObject(const std::string& key) const;
+    Array* getArray(const std::string& key) const;
+    std::string getString(const std::string& key, std::string def = "") const;
+    int64_t getInt(const std::string& key, int64_t def = 0) const;
+    double getDouble(const std::string& key, double def = 0.0) const;
+    bool getBool(const std::string& key, bool def = false) const;
 
-    void set(const char* key, Value* value);
-    void set(const char* key, const char* string);
-    void set(const char* key, const std::string& str);
-    void set(const char* key, double number);
+    void set(const std::string& key, Value* value);
+    void set(const std::string& key, const std::string& str);
+    void set(const std::string& key, double number);
 
-    void remove(const char* key);
+    void remove(const std::string& key);
 
 private:
     std::map<std::string, Value*> m_members;
@@ -163,7 +162,7 @@ public:
     double get() const { return m_value; };
 
 private:
-    double m_value;
+    float m_value;
 };
 
 /**
