@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include <lwip/arch.h>
 #include <lwip/sockets.h>
 
 #include "rbjson.h"
