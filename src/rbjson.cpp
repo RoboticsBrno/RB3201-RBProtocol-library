@@ -9,6 +9,8 @@
 #include "jsmn.h"
 #include "rbjson.h"
 
+#include "mpaland-printf/printf.h"
+
 #define TAG "RbJson"
 
 namespace rbjson {
@@ -24,12 +26,12 @@ static int count_tok_size(jsmntok_t* tok) {
 static inline void write_string_escaped(const char* str, std::ostream& ss) {
     const char* start = str;
     const char* end = NULL;
-    ss << '"';
+    ss.put('"');
     while (true) {
         end = strchr(start, '"');
         if (end == NULL) {
             ss.write(start, strlen(start));
-            ss << '"';
+            ss.put('"');
             return;
         } else {
             ss.write(start, end - start);
@@ -37,6 +39,10 @@ static inline void write_string_escaped(const char* str, std::ostream& ss) {
             start = end + 1;
         }
     }
+}
+
+static void fct_ostream(char c, void* arg) {
+    ((std::ostream*)arg)->put(c);
 }
 
 static Value* parse_value(char* buf, jsmntok_t* tok);
@@ -158,9 +164,9 @@ Value::~Value() {
 }
 
 std::string Value::str() const {
-    std::ostringstream ss;
-    serialize(ss);
-    return ss.str();
+    std::unique_ptr<std::ostringstream> ss(new std::ostringstream);
+    serialize(*ss);
+    return ss->str();
 }
 
 Object::Object()
@@ -174,16 +180,16 @@ Object::~Object() {
 }
 
 void Object::serialize(std::ostream& ss) const {
-    ss << '{';
+    ss.put('{');
     for (auto itr = m_members.cbegin(); itr != m_members.cend();) {
         write_string_escaped(itr->first.c_str(), ss);
-        ss << ':';
+        ss.put(':');
         itr->second->serialize(ss);
         if (++itr != m_members.cend()) {
-            ss << ',';
+            ss.put(',');
         }
     }
-    ss << '}';
+    ss.put('}');
 }
 
 void Object::swapData(Object& other) {
@@ -314,14 +320,14 @@ Array::~Array() {
 }
 
 void Array::serialize(std::ostream& ss) const {
-    ss << '[';
+    ss.put('[');
     for (size_t i = 0; i < m_items.size(); ++i) {
         m_items[i]->serialize(ss);
         if (i + 1 != m_items.size()) {
-            ss << ',';
+            ss.put(',');
         }
     }
-    ss << ']';
+    ss.put(']');
 }
 
 bool Array::equals(const Value& other) const {
@@ -465,10 +471,10 @@ void Number::serialize(std::ostream& ss) const {
     float intpart;
     float fracpart = fabsf(modff(m_value, &intpart));
     if (fracpart < 0.0001f) {
-        ss << int64_t(m_value);
+        fctprintf(fct_ostream, &ss, "%lld", (long long)m_value);
     } else {
         // std::stringstream needs 1.5KB of stack to format a double
-        ss << (int64_t)intpart << '.' << (uint32_t)(fracpart * 10000);
+        fctprintf(fct_ostream, &ss, "%.4f", m_value);
     }
 }
 
@@ -494,9 +500,9 @@ Bool::~Bool() {
 
 void Bool::serialize(std::ostream& ss) const {
     if (m_value) {
-        ss << "true";
+        ss.write("true", 4);
     } else {
-        ss << "false";
+        ss.write("false", 5);
     }
 }
 
@@ -513,7 +519,7 @@ Value* Bool::copy() const {
 }
 
 void Nil::serialize(std::ostream& ss) const {
-    ss << "null";
+    ss.write("null", 4);
 }
 
 Value* Nil::copy() const {
