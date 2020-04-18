@@ -44,7 +44,7 @@ Protocol::Protocol(const char* owner, const char* name, const char* description,
     m_mustarrive_e = 0;
     m_mustarrive_f = 0;
 
-    memset(&m_possessed_addr, 0, sizeof(struct sockaddr_in));
+    memset(&m_possessed_addr, 0, sizeof(SockAddr));
 }
 
 Protocol::~Protocol() {
@@ -108,22 +108,22 @@ void Protocol::stop() {
 
 bool Protocol::is_possessed() const {
     m_mutex.lock();
-    bool res = m_possessed_addr.sin_port != 0;
+    bool res = m_possessed_addr.port != 0;
     m_mutex.unlock();
     return res;
 }
 
-bool Protocol::get_possessed_addr(struct sockaddr_in* addr) {
+bool Protocol::get_possessed_addr(Protocol::SockAddr& addr) {
     std::lock_guard<std::mutex> lock(m_mutex);
-    if (m_possessed_addr.sin_port == 0)
+    if (m_possessed_addr.port == 0)
         return false;
-    memcpy(addr, &m_possessed_addr, sizeof(struct sockaddr_in));
+    addr = m_possessed_addr;
     return true;
 }
 
 void Protocol::send_mustarrive(const char* cmd, Object* params) {
-    struct sockaddr_in addr;
-    if (!get_possessed_addr(&addr)) {
+    SockAddr addr;
+    if (!get_possessed_addr(addr)) {
         ESP_LOGW(TAG, "can't send, the device was not possessed yet.");
         delete params;
         return;
@@ -135,28 +135,31 @@ void Protocol::send_mustarrive(const char* cmd, Object* params) {
 
     params->set("c", cmd);
 
-    MustArrive mr;
-    mr.pkt = params;
-    mr.attempts = 0;
+    {
+        MustArrive mr;
+        mr.pkt = params;
+        mr.attempts = 0;
 
-    m_mustarrive_mutex.lock();
-    mr.id = ++m_mustarrive_e;
-    params->set("e", mr.id);
-    m_mustarrive_queue.push_back(mr);
-    send(&addr, params);
+        m_mustarrive_mutex.lock();
+        mr.id = ++m_mustarrive_e;
+        params->set("e", mr.id);
+        m_mustarrive_queue.emplace_back(mr);
+    }
+
+    send(addr, params);
     m_mustarrive_mutex.unlock();
 }
 
 void Protocol::send(const char* cmd, Object* obj) {
-    struct sockaddr_in addr;
-    if (!get_possessed_addr(&addr)) {
+    SockAddr addr;
+    if (!get_possessed_addr(addr)) {
         ESP_LOGW(TAG, "can't send, the device was not possessed yet.");
         return;
     }
-    send(&addr, cmd, obj);
+    send(addr, cmd, obj);
 }
 
-void Protocol::send(const struct sockaddr_in* addr, const char* cmd, Object* obj) {
+void Protocol::send(const SockAddr& addr, const char* cmd, Object* obj) {
     std::unique_ptr<Object> autoptr;
     if (obj == NULL) {
         obj = new Object();
@@ -167,9 +170,9 @@ void Protocol::send(const struct sockaddr_in* addr, const char* cmd, Object* obj
     send(addr, obj);
 }
 
-void Protocol::send(const struct sockaddr_in* addr, Object* obj) {
+void Protocol::send(const SockAddr& addr, Object* obj) {
     m_mutex.lock();
-    int n = m_write_counter++;
+    const int n = m_write_counter++;
     m_mutex.unlock();
 
     obj->set("n", new Number(n));
@@ -177,16 +180,16 @@ void Protocol::send(const struct sockaddr_in* addr, Object* obj) {
     send(addr, str.c_str(), str.size());
 }
 
-void Protocol::send(const struct sockaddr_in* addr, const char* buf) {
+void Protocol::send(const SockAddr& addr, const char* buf) {
     send(addr, buf, strlen(buf));
 }
 
-void Protocol::send(const struct sockaddr_in* addr, const char* buf, size_t size) {
+void Protocol::send(const SockAddr& addr, const char* buf, size_t size) {
     if (size == 0)
         return;
 
     QueueItem it;
-    memcpy(&it.addr, addr, sizeof(struct sockaddr_in));
+    it.addr = addr;
     it.buf = new char[size];
     it.size = size;
     memcpy(it.buf, buf, size);
@@ -230,6 +233,13 @@ void Protocol::send_task_trampoline(void* ctrl) {
 void Protocol::send_task() {
     TickType_t mustarrive_next;
     QueueItem it;
+    struct sockaddr_in send_addr = {
+        .sin_len = sizeof(struct sockaddr_in),
+        .sin_family = AF_INET,
+        .sin_port = 0,
+        .sin_addr = { 0 },
+        .sin_zero = { 0 },
+    };
 
     m_mutex.lock();
     const int socket_fd = m_socket;
@@ -243,7 +253,10 @@ void Protocol::send_task() {
                 goto exit;
             }
 
-            int res = ::sendto(socket_fd, it.buf, it.size, 0, (struct sockaddr*)&it.addr, sizeof(struct sockaddr_in));
+            send_addr.sin_port = it.addr.port;
+            send_addr.sin_addr = it.addr.ip;
+
+            int res = ::sendto(socket_fd, it.buf, it.size, 0, (struct sockaddr*)&send_addr, sizeof(struct sockaddr_in));
             if (res < 0) {
                 ESP_LOGE(TAG, "error in sendto: %d %s!", errno, strerror(errno));
             }
@@ -265,8 +278,20 @@ exit:
 }
 
 void Protocol::resend_mustarrive_locked() {
-    struct sockaddr_in addr;
-    const bool possesed = get_possessed_addr(&addr);
+    bool possesed;
+    struct sockaddr_in send_addr = {
+        .sin_len = sizeof(struct sockaddr_in),
+        .sin_family = AF_INET,
+        .sin_port = 0,
+        .sin_addr = { 0 },
+        .sin_zero = { 0 },
+    };
+    {
+        SockAddr addr;
+        possesed = get_possessed_addr(addr);
+        send_addr.sin_port = addr.port;
+        send_addr.sin_addr = addr.ip;
+    }
 
     for (auto itr = m_mustarrive_queue.begin(); itr != m_mustarrive_queue.end();) {
         if (possesed) {
@@ -278,7 +303,7 @@ void Protocol::resend_mustarrive_locked() {
 
             const auto str = (*itr).pkt->str();
 
-            int res = ::sendto(m_socket, str.c_str(), str.size(), 0, (struct sockaddr*)&addr, sizeof(struct sockaddr_in));
+            int res = ::sendto(m_socket, str.c_str(), str.size(), 0, (struct sockaddr*)&send_addr, sizeof(struct sockaddr_in));
             if (res < 0) {
                 ESP_LOGE(TAG, "error in sendto: %d %s!", errno, strerror(errno));
             }
@@ -342,7 +367,11 @@ void Protocol::recv_task() {
             if (!pkt) {
                 ESP_LOGE(TAG, "failed to parse the packet's json");
             } else {
-                handle_msg(&addr, pkt.get());
+                SockAddr sa = {
+                    .ip = addr.sin_addr,
+                    .port = addr.sin_port,
+                };
+                handle_msg(sa, pkt.get());
             }
         }
     }
@@ -352,7 +381,7 @@ exit:
     vTaskDelete(nullptr);
 }
 
-void Protocol::handle_msg(const struct sockaddr_in* addr, rbjson::Object* pkt) {
+void Protocol::handle_msg(const SockAddr& addr, rbjson::Object* pkt) {
     const auto cmd = pkt->getString("c");
 
     if (cmd == "discover") {
@@ -394,8 +423,8 @@ void Protocol::handle_msg(const struct sockaddr_in* addr, rbjson::Object* pkt) {
 
         if (cmd == "possess") {
             m_mutex.lock();
-            if (m_possessed_addr.sin_addr.s_addr != addr->sin_addr.s_addr || m_possessed_addr.sin_port != addr->sin_port) {
-                memcpy(&m_possessed_addr, addr, sizeof(struct sockaddr_in));
+            if (m_possessed_addr.ip.s_addr != addr.ip.s_addr || m_possessed_addr.port != addr.port) {
+                m_possessed_addr = addr;
             }
             m_mustarrive_e = 0;
             m_mustarrive_f = 0;

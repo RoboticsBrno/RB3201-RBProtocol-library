@@ -21,19 +21,19 @@ static int count_tok_size(jsmntok_t* tok) {
     return itr - tok;
 }
 
-static void write_string_escaped(const char* str, std::stringstream& ss) {
+static inline void write_string_escaped(const char* str, std::ostream& ss) {
     const char* start = str;
     const char* end = NULL;
     ss << '"';
     while (true) {
         end = strchr(start, '"');
         if (end == NULL) {
-            ss << start;
+            ss.write(start, strlen(start));
             ss << '"';
             return;
         } else {
             ss.write(start, end - start);
-            ss << "\\\"";
+            ss.write("\\\"", 2);
             start = end + 1;
         }
     }
@@ -56,7 +56,7 @@ static Object* parse_object(char* buf, jsmntok_t* obj) {
         Value* val = parse_value(buf, tok + 1);
         if (val != NULL) {
             std::string key(buf + tok->start, tok->end - tok->start);
-            res->set(key.c_str(), val);
+            res->set(std::move(key), val);
         }
 
         tok += count_tok_size(tok);
@@ -125,7 +125,7 @@ Object* parse(char* buf, size_t size) {
     jsmn_parser parser;
     size_t tokens_size = 32;
     jsmntok_t tokens_static[32];
-    std::unique_ptr<jsmntok_t> tokens_dynamic;
+    std::unique_ptr<jsmntok_t[]> tokens_dynamic;
     jsmntok_t* tokens = tokens_static;
     int parsed;
 
@@ -158,8 +158,8 @@ Value::~Value() {
 }
 
 std::string Value::str() const {
-    std::stringstream ss;
-    this->serialize(ss);
+    std::ostringstream ss;
+    serialize(ss);
     return ss.str();
 }
 
@@ -173,13 +173,13 @@ Object::~Object() {
     }
 }
 
-void Object::serialize(std::stringstream& ss) const {
+void Object::serialize(std::ostream& ss) const {
     ss << '{';
-    for (auto itr = m_members.begin(); itr != m_members.end();) {
+    for (auto itr = m_members.cbegin(); itr != m_members.cend();) {
         write_string_escaped(itr->first.c_str(), ss);
         ss << ':';
         itr->second->serialize(ss);
-        if (++itr != m_members.end()) {
+        if (++itr != m_members.cend()) {
             ss << ',';
         }
     }
@@ -313,7 +313,7 @@ Array::~Array() {
     }
 }
 
-void Array::serialize(std::stringstream& ss) const {
+void Array::serialize(std::ostream& ss) const {
     ss << '[';
     for (size_t i = 0; i < m_items.size(); ++i) {
         m_items[i]->serialize(ss);
@@ -437,7 +437,7 @@ String::String(const std::string& value)
 String::~String() {
 }
 
-void String::serialize(std::stringstream& ss) const {
+void String::serialize(std::ostream& ss) const {
     write_string_escaped(m_value.c_str(), ss);
 }
 
@@ -461,13 +461,14 @@ Number::Number(double value)
 Number::~Number() {
 }
 
-void Number::serialize(std::stringstream& ss) const {
-    double intpart;
-    double fracpart = modf(m_value, &intpart);
-    if (fracpart > -0.0001 && fracpart < 0.0001) {
+void Number::serialize(std::ostream& ss) const {
+    float intpart;
+    float fracpart = fabsf(modff(m_value, &intpart));
+    if (fracpart < 0.0001f) {
         ss << int64_t(m_value);
     } else {
-        ss << m_value;
+        // std::stringstream needs 1.5KB of stack to format a double
+        ss << (int64_t)intpart << '.' << (uint32_t)(fracpart * 10000);
     }
 }
 
@@ -491,7 +492,7 @@ Bool::Bool(bool value)
 Bool::~Bool() {
 }
 
-void Bool::serialize(std::stringstream& ss) const {
+void Bool::serialize(std::ostream& ss) const {
     if (m_value) {
         ss << "true";
     } else {
@@ -511,7 +512,7 @@ Value* Bool::copy() const {
     return new Bool(m_value);
 }
 
-void Nil::serialize(std::stringstream& ss) const {
+void Nil::serialize(std::ostream& ss) const {
     ss << "null";
 }
 

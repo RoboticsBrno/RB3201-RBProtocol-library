@@ -33,7 +33,7 @@ public:
     Value(type_t type = NIL);
     virtual ~Value();
 
-    virtual void serialize(std::stringstream& ss) const = 0; //!< Serialize the value to a string
+    virtual void serialize(std::ostream& ss) const = 0; //!< Serialize the value to a string
     std::string str() const; //!< Helper that calls serialize() and returns a string
 
     //!< Get the object type
@@ -68,7 +68,7 @@ public:
     Object();
     ~Object();
 
-    void serialize(std::stringstream& ss) const;
+    void serialize(std::ostream& ss) const;
     bool equals(const Value& other) const;
     Value* copy() const;
 
@@ -103,7 +103,7 @@ public:
     Array();
     ~Array();
 
-    void serialize(std::stringstream& ss) const;
+    void serialize(std::ostream& ss) const;
     bool equals(const Value& other) const;
     Value* copy() const;
 
@@ -137,7 +137,7 @@ public:
     explicit String(const std::string& value);
     ~String();
 
-    void serialize(std::stringstream& ss) const;
+    void serialize(std::ostream& ss) const;
     bool equals(const Value& other) const;
     Value* copy() const;
 
@@ -155,7 +155,7 @@ public:
     explicit Number(double value = 0.0);
     ~Number();
 
-    void serialize(std::stringstream& ss) const;
+    void serialize(std::ostream& ss) const;
     bool equals(const Value& other) const;
     Value* copy() const;
 
@@ -173,7 +173,7 @@ public:
     explicit Bool(bool value = false);
     ~Bool();
 
-    void serialize(std::stringstream& ss) const;
+    void serialize(std::ostream& ss) const;
     bool equals(const Value& other) const;
     Value* copy() const;
 
@@ -188,7 +188,7 @@ private:
  */
 class Nil : public Value {
 public:
-    void serialize(std::stringstream& ss) const;
+    void serialize(std::ostream& ss) const;
     Value* copy() const;
 };
 

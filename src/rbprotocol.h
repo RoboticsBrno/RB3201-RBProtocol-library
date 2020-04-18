@@ -69,13 +69,18 @@ private:
         int16_t attempts;
     };
 
+    struct SockAddr {
+        struct in_addr ip;
+        uint16_t port;
+    };
+
     struct QueueItem {
-        struct sockaddr_in addr;
+        SockAddr addr;
         char* buf;
         uint16_t size;
     };
 
-    bool get_possessed_addr(struct sockaddr_in* addr);
+    bool get_possessed_addr(SockAddr& addr);
 
     static void send_task_trampoline(void* ctrl);
     void send_task();
@@ -84,12 +89,12 @@ private:
     static void recv_task_trampoline(void* ctrl);
     void recv_task();
 
-    void send(const struct sockaddr_in* addr, const char* command, rbjson::Object* obj);
-    void send(const struct sockaddr_in* addr, rbjson::Object* obj);
-    void send(const struct sockaddr_in* addr, const char* buf);
-    void send(const struct sockaddr_in* addr, const char* buf, size_t size);
+    void send(const SockAddr& addr, const char* command, rbjson::Object* obj);
+    void send(const SockAddr& addr, rbjson::Object* obj);
+    void send(const SockAddr& addr, const char* buf);
+    void send(const SockAddr& addr, const char* buf, size_t size);
 
-    void handle_msg(const struct sockaddr_in* addr, rbjson::Object* pkt);
+    void handle_msg(const SockAddr& addr, rbjson::Object* pkt);
 
     const char* m_owner;
     const char* m_name;
@@ -103,7 +108,7 @@ private:
     int m_socket;
     int m_read_counter;
     int m_write_counter;
-    struct sockaddr_in m_possessed_addr;
+    SockAddr m_possessed_addr;
     QueueHandle_t m_sendQueue;
     mutable std::mutex m_mutex;
 
