@@ -164,9 +164,9 @@ Value::~Value() {
 }
 
 std::string Value::str() const {
-    std::unique_ptr<std::ostringstream> ss(new std::ostringstream);
-    serialize(*ss);
-    return ss->str();
+    std::ostringstream ss;
+    serialize(ss);
+    return ss.str();
 }
 
 Object::Object()
