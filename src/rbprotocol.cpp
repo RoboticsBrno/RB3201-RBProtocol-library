@@ -42,7 +42,7 @@ Protocol::Protocol(const char* owner, const char* name, const char* description,
     m_write_counter = 0;
 
     m_mustarrive_e = 0;
-    m_mustarrive_f = 0;
+    m_mustarrive_f = 0xFFFFFFFF;
 
     memset(&m_possessed_addr, 0, sizeof(SockAddr));
 }
@@ -121,12 +121,23 @@ bool Protocol::get_possessed_addr(Protocol::SockAddr& addr) {
     return true;
 }
 
-void Protocol::send_mustarrive(const char* cmd, Object* params) {
+bool Protocol::is_mustarrive_complete(uint32_t id) const {
+    if (id == UINT32_MAX)
+        return true;
+    std::lock_guard<std::mutex> l(m_mustarrive_mutex);
+    for (const auto& it : m_mustarrive_queue) {
+        if (it.id == id)
+            return false;
+    }
+    return true;
+}
+
+uint32_t Protocol::send_mustarrive(const char* cmd, Object* params) {
     SockAddr addr;
     if (!get_possessed_addr(addr)) {
         ESP_LOGW(TAG, "can't send, the device was not possessed yet.");
         delete params;
-        return;
+        return UINT32_MAX;
     }
 
     if (params == NULL) {
@@ -135,19 +146,19 @@ void Protocol::send_mustarrive(const char* cmd, Object* params) {
 
     params->set("c", cmd);
 
-    {
-        MustArrive mr;
-        mr.pkt = params;
-        mr.attempts = 0;
+    MustArrive mr;
+    mr.pkt = params;
+    mr.attempts = 0;
 
-        m_mustarrive_mutex.lock();
-        mr.id = ++m_mustarrive_e;
-        params->set("e", mr.id);
-        m_mustarrive_queue.emplace_back(mr);
-    }
-
+    m_mustarrive_mutex.lock();
+    const uint32_t id = ++m_mustarrive_e;
+    mr.id = id;
+    params->set("e", mr.id);
+    m_mustarrive_queue.emplace_back(mr);
     send(addr, params);
     m_mustarrive_mutex.unlock();
+
+    return id;
 }
 
 void Protocol::send(const char* cmd, Object* obj) {
@@ -427,7 +438,7 @@ void Protocol::handle_msg(const SockAddr& addr, rbjson::Object* pkt) {
                 m_possessed_addr = addr;
             }
             m_mustarrive_e = 0;
-            m_mustarrive_f = 0;
+            m_mustarrive_f = 0xFFFFFFFF;
             m_mutex.unlock();
 
             m_mustarrive_mutex.lock();
@@ -439,13 +450,13 @@ void Protocol::handle_msg(const SockAddr& addr, rbjson::Object* pkt) {
         }
 
         int f = pkt->getInt("f");
-        if (f <= m_mustarrive_f) {
+        if (f <= m_mustarrive_f && m_mustarrive_f != 0xFFFFFFFF) {
             return;
         } else {
             m_mustarrive_f = f;
         }
     } else if (pkt->contains("e")) {
-        int e = pkt->getInt("e");
+        uint32_t e = pkt->getInt("e");
         m_mustarrive_mutex.lock();
         for (auto itr = m_mustarrive_queue.begin(); itr != m_mustarrive_queue.end(); ++itr) {
             if ((*itr).id == e) {

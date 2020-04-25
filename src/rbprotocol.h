@@ -50,14 +50,19 @@ public:
      *
      * If you pass the params object, it has to be heap-allocated and
      * RbProtocol becomes its owner - you MUST NOT delete it.
+     * 
+     * \return id of the mustarrive packet, you can use it in is_mustarrive_complete.
+     *         Returns UINT32_MAX if the sending failed.
      */
-    void send_mustarrive(const char* cmd, rbjson::Object* params = NULL);
+    uint32_t send_mustarrive(const char* cmd, rbjson::Object* params = NULL);
 
     void send_log(const char* fmt, ...); //!< Send a message to the android app
     void send_log(const char* fmt, va_list args); //!< Send a message to the android app
     void send_log(const char* str); //!< Send a message to the android app
 
     bool is_possessed() const; //!< Returns true of the device is possessed (somebody connected to it)
+
+    bool is_mustarrive_complete(uint32_t id) const;
 
     TaskHandle_t getTaskSend() const { return m_task_send; }
     TaskHandle_t getTaskRecv() const { return m_task_recv; }
