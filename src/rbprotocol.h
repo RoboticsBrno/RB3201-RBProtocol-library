@@ -111,8 +111,8 @@ private:
     TaskHandle_t m_task_recv;
 
     int m_socket;
-    int m_read_counter;
-    int m_write_counter;
+    int32_t m_read_counter;
+    int32_t m_write_counter;
     SockAddr m_possessed_addr;
     QueueHandle_t m_sendQueue;
     mutable std::mutex m_mutex;

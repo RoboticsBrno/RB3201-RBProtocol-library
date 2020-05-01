@@ -20,18 +20,13 @@ class WiFiInitializer {
 
 public:
     WiFiInitializer() {
-        esp_err_t ret = nvs_flash_init();
-        if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-            ESP_ERROR_CHECK(nvs_flash_erase());
-            ret = nvs_flash_init();
-        }
-        ESP_ERROR_CHECK(ret);
-
         tcpip_adapter_init();
 
         ESP_ERROR_CHECK(esp_event_loop_init(&WiFi::eventHandler, NULL));
 
         wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+        cfg.nvs_enable = 0;
+        cfg.nano_enable = 1;
         ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
         ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));

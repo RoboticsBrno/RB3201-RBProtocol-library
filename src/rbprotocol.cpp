@@ -151,7 +151,7 @@ uint32_t Protocol::send_mustarrive(const char* cmd, Object* params) {
     mr.attempts = 0;
 
     m_mustarrive_mutex.lock();
-    const uint32_t id = ++m_mustarrive_e;
+    const uint32_t id = m_mustarrive_e++;
     mr.id = id;
     params->set("e", mr.id);
     m_mustarrive_queue.emplace_back(mr);
@@ -205,7 +205,7 @@ void Protocol::send(const SockAddr& addr, const char* buf, size_t size) {
     it.size = size;
     memcpy(it.buf, buf, size);
 
-    if (xQueueSend(m_sendQueue, &it, 200 / portTICK_PERIOD_MS) != pdTRUE) {
+    if (xQueueSend(m_sendQueue, &it, pdMS_TO_TICKS(200)) != pdTRUE) {
         ESP_LOGE(TAG, "failed to send - queue full!");
         delete[] it.buf;
     }
@@ -418,10 +418,29 @@ void Protocol::handle_msg(const SockAddr& addr, rbjson::Object* pkt) {
         m_mutex.lock();
         m_write_counter = 0;
         m_mutex.unlock();
-    } else if (counter < m_read_counter && m_read_counter - counter < 300) {
+    } else if (counter < m_read_counter && m_read_counter - counter < 25) {
         return;
     } else {
         m_read_counter = counter;
+    }
+
+    if (m_possessed_addr.port == 0 || cmd == "possess") {
+        m_mutex.lock();
+        if (m_possessed_addr.ip.s_addr != addr.ip.s_addr || m_possessed_addr.port != addr.port) {
+            m_possessed_addr = addr;
+        }
+        m_mustarrive_e = 0;
+        m_mustarrive_f = 0xFFFFFFFF;
+        m_write_counter = -1;
+        m_read_counter = -1;
+        m_mutex.unlock();
+
+        m_mustarrive_mutex.lock();
+        for (auto it : m_mustarrive_queue) {
+            delete it.pkt;
+        }
+        m_mustarrive_queue.clear();
+        m_mustarrive_mutex.unlock();
     }
 
     if (pkt->contains("f")) {
@@ -430,23 +449,6 @@ void Protocol::handle_msg(const SockAddr& addr, rbjson::Object* pkt) {
             resp->set("c", cmd);
             resp->set("f", pkt->getInt("f"));
             send(addr, resp.get());
-        }
-
-        if (cmd == "possess") {
-            m_mutex.lock();
-            if (m_possessed_addr.ip.s_addr != addr.ip.s_addr || m_possessed_addr.port != addr.port) {
-                m_possessed_addr = addr;
-            }
-            m_mustarrive_e = 0;
-            m_mustarrive_f = 0xFFFFFFFF;
-            m_mutex.unlock();
-
-            m_mustarrive_mutex.lock();
-            for (auto it : m_mustarrive_queue) {
-                delete it.pkt;
-            }
-            m_mustarrive_queue.clear();
-            m_mustarrive_mutex.unlock();
         }
 
         int f = pkt->getInt("f");
