@@ -58,7 +58,7 @@ public:
 
     void send_log(const char* fmt, ...); //!< Send a message to the android app
     void send_log(const char* fmt, va_list args); //!< Send a message to the android app
-    void send_log(const char* str); //!< Send a message to the android app
+    void send_log(const std::string& str); //!< Send a message to the android app
 
     bool is_possessed() const; //!< Returns true of the device is possessed (somebody connected to it)
 

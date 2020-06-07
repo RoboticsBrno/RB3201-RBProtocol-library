@@ -219,21 +219,23 @@ void Protocol::send_log(const char* fmt, ...) {
 }
 
 void Protocol::send_log(const char* fmt, va_list args) {
-    Object* pkt = new Object();
-    {
-        char static_buf[256];
-        std::unique_ptr<char[]> dyn_buf;
-        char* used_buf = static_buf;
+    char static_buf[256];
+    std::unique_ptr<char[]> dyn_buf;
+    char* used_buf = static_buf;
 
-        int fmt_len = vsnprintf(static_buf, sizeof(static_buf), fmt, args);
-        if (fmt_len >= sizeof(static_buf)) {
-            dyn_buf.reset(new char[fmt_len + 1]);
-            used_buf = dyn_buf.get();
-            vsnprintf(dyn_buf.get(), fmt_len + 1, fmt, args);
-        }
-
-        pkt->set("msg", used_buf);
+    int fmt_len = vsnprintf(static_buf, sizeof(static_buf), fmt, args);
+    if (fmt_len >= sizeof(static_buf)) {
+        dyn_buf.reset(new char[fmt_len + 1]);
+        used_buf = dyn_buf.get();
+        vsnprintf(dyn_buf.get(), fmt_len + 1, fmt, args);
     }
+
+    send_log(std::string(used_buf));
+}
+
+void Protocol::send_log(const std::string& str) {
+    Object* pkt = new Object();
+    pkt->set("msg", str);
     send_mustarrive("log", pkt);
 }
 
