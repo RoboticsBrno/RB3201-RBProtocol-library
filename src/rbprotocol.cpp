@@ -84,7 +84,7 @@ void Protocol::start(uint16_t port) {
         return;
     }
 
-    xTaskCreate(&Protocol::send_task_trampoline, "rbctrl_send", 2048, this, 9, &m_task_send);
+    xTaskCreate(&Protocol::send_task_trampoline, "rbctrl_send", 2560, this, 9, &m_task_send);
     xTaskCreate(&Protocol::recv_task_trampoline, "rbctrl_recv", 4096, this, 10, &m_task_recv);
 }
 
