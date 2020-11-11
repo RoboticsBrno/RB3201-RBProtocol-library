@@ -49,7 +49,7 @@ void WiFi::connect(const char* ssid, const char* pass) {
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
 
-    wifi_config_t cfg = { 0 };
+    wifi_config_t cfg = { };
     snprintf((char*)cfg.sta.ssid, 32, "%s", ssid);
     snprintf((char*)cfg.sta.password, 64, "%s", pass);
     esp_wifi_set_config(WIFI_IF_STA, &cfg);
@@ -64,7 +64,7 @@ void WiFi::startAp(const char* ssid, const char* pass, uint8_t channel) {
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
 
-    wifi_config_t cfg = { 0 };
+    wifi_config_t cfg = { };
 
     if (strlen(pass) >= 8) {
         snprintf((char*)cfg.ap.password, 64, "%s", pass);

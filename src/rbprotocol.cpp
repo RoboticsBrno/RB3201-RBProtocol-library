@@ -94,7 +94,7 @@ void Protocol::stop() {
         return;
     }
 
-    QueueItem it = { 0 };
+    QueueItem it = { };
     xQueueSend(m_sendQueue, &it, portMAX_DELAY);
 
     if (m_socket != -1) {
