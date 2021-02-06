@@ -22,13 +22,13 @@ public:
     static void startAp(const char* ssid, const char* password, uint8_t channel = 6);
 
     //!< Return current IP address of the ESP32
-    static ip4_addr_t getIp() { return m_ip.load(); }
+    static uint32_t getIp() { return m_ip.load(); }
 
 private:
     static void init();
 
     static esp_err_t eventHandler(void* ctx, system_event_t* event);
 
-    static std::atomic<ip4_addr_t> m_ip;
+    static std::atomic<uint32_t> m_ip;
 };
 };

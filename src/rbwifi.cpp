@@ -11,16 +11,16 @@
 
 namespace rb {
 
-static const ip4_addr_t EMPTY_IP = {
-    .addr = 0,
-};
-
 class WiFiInitializer {
     friend class WiFi;
 
 public:
     WiFiInitializer() {
+#ifdef _ESP_NETIF_H_
+        esp_netif_init();
+#else
         tcpip_adapter_init();
+#endif
 
         ESP_ERROR_CHECK(esp_event_loop_init(&WiFi::eventHandler, NULL));
 
@@ -36,7 +36,7 @@ public:
     }
 };
 
-std::atomic<ip4_addr_t> WiFi::m_ip;
+std::atomic<uint32_t> WiFi::m_ip;
 
 void WiFi::init() {
     static WiFiInitializer init;
@@ -49,7 +49,7 @@ void WiFi::connect(const char* ssid, const char* pass) {
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
 
-    wifi_config_t cfg = { };
+    wifi_config_t cfg = {};
     snprintf((char*)cfg.sta.ssid, 32, "%s", ssid);
     snprintf((char*)cfg.sta.password, 64, "%s", pass);
     esp_wifi_set_config(WIFI_IF_STA, &cfg);
@@ -64,7 +64,7 @@ void WiFi::startAp(const char* ssid, const char* pass, uint8_t channel) {
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
 
-    wifi_config_t cfg = { };
+    wifi_config_t cfg = {};
 
     if (strlen(pass) >= 8) {
         snprintf((char*)cfg.ap.password, 64, "%s", pass);
@@ -95,14 +95,24 @@ esp_err_t WiFi::eventHandler(void* ctx, system_event_t* event) {
         ESP_LOGI(TAG, "SYSTEM_EVENT_STA_STOP");
         tcpip_adapter_dhcpc_stop(TCPIP_ADAPTER_IF_STA);
         break;
-    case SYSTEM_EVENT_STA_GOT_IP:
+    case SYSTEM_EVENT_STA_GOT_IP: {
+#ifdef _ESP_NETIF_H_
+        char buf[16];
+#endif
+
         ESP_LOGI(TAG, "SYSTEM_EVENT_STA_GOT_IP");
         ESP_LOGI(TAG, "Got IP: %s\n",
-            ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
-        m_ip.store(event->event_info.got_ip.ip_info.ip);
+#ifdef _ESP_NETIF_H_
+            esp_ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip, buf, sizeof(buf))
+#else
+            ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip)
+#endif
+        );
+        m_ip.store(event->event_info.got_ip.ip_info.ip.addr);
         break;
+    }
     case SYSTEM_EVENT_STA_DISCONNECTED:
-        m_ip.store(EMPTY_IP);
+        m_ip.store(0);
         ESP_LOGI(TAG, "SYSTEM_EVENT_STA_DISCONNECTED");
         esp_wifi_connect();
         break;
@@ -121,19 +131,19 @@ esp_err_t WiFi::eventHandler(void* ctx, system_event_t* event) {
         IP4_ADDR(&lease.end_ip, 192, 168, 0, 250);
 
         tcpip_adapter_dhcps_option(
-            (tcpip_adapter_option_mode_t)TCPIP_ADAPTER_OP_SET,
-            (tcpip_adapter_option_id_t)TCPIP_ADAPTER_REQUESTED_IP_ADDRESS,
+            TCPIP_ADAPTER_OP_SET,
+            TCPIP_ADAPTER_REQUESTED_IP_ADDRESS,
             (void*)&lease, sizeof(dhcps_lease_t));
 
         ESP_ERROR_CHECK(tcpip_adapter_dhcps_start(TCPIP_ADAPTER_IF_AP));
 
-        m_ip.store(info.ip);
+        m_ip.store(info.ip.addr);
         break;
     }
     case SYSTEM_EVENT_AP_STOP:
         ESP_LOGI(TAG, "SYSTEM_EVENT_AP_STOP");
         tcpip_adapter_dhcps_stop(TCPIP_ADAPTER_IF_AP);
-        m_ip.store(EMPTY_IP);
+        m_ip.store(0);
         break;
     case SYSTEM_EVENT_AP_STACONNECTED:
         ESP_LOGI(TAG, "SYSTEM_EVENT_AP_STACONNECTED");
