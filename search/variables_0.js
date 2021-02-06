@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['empty_5fip_178',['EMPTY_IP',['../namespacerb.html#a9134aa75f88320ffa2156e63f5c9692a',1,'rb']]]
+  ['m_5ftype_177',['m_type',['../classrbjson_1_1Value.html#af520dbfef6f234335b8c73b123069228',1,'rbjson::Value']]]
 ];
