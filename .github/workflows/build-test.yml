@@ -18,6 +18,4 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install platformio
       - name: Build examples
-        run: platformio ci --lib="." --project-conf="./platformio.ini"
-        env:
-          PLATFORMIO_CI_SRC: ${{ matrix.example }}
+        run: platformio ci --lib="." --project-conf="./platformio.ini" ${{ matrix.example }} partitions.csv
