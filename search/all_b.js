@@ -14,8 +14,9 @@ var searchData=
   ['rbprotocol_5faxis_5fmin_61',['RBPROTOCOL_AXIS_MIN',['../rbprotocol_8h.html#a296e089ddda9b68fcd422f246d45c873',1,'rbprotocol.h']]],
   ['rbprotocol_5fport_62',['RBPROTOCOL_PORT',['../rbprotocol_8h.html#af4caabb7a561cb476fb6bd2235cf1009',1,'rbprotocol.h']]],
   ['rbwebserver_2eh_63',['rbwebserver.h',['../rbwebserver_8h.html',1,'']]],
-  ['rbwifi_2ecpp_64',['rbwifi.cpp',['../rbwifi_8cpp.html',1,'']]],
-  ['rbwifi_2eh_65',['rbwifi.h',['../rbwifi_8h.html',1,'']]],
-  ['readme_2emd_66',['README.md',['../README_8md.html',1,'']]],
-  ['remove_67',['remove',['../classrbjson_1_1Object.html#aab0785202f5609b50a2c517f4be6e1a8',1,'rbjson::Object::remove()'],['../classrbjson_1_1Array.html#ae5d5e07d40e3968b6cd727cd93d5e4fa',1,'rbjson::Array::remove()']]]
+  ['rbwifi_2eh_64',['rbwifi.h',['../rbwifi_8h.html',1,'']]],
+  ['rbwifi_5fnetif_2ecpp_65',['rbwifi_netif.cpp',['../rbwifi__netif_8cpp.html',1,'']]],
+  ['rbwifi_5ftcpip_2ecpp_66',['rbwifi_tcpip.cpp',['../rbwifi__tcpip_8cpp.html',1,'']]],
+  ['readme_2emd_67',['README.md',['../README_8md.html',1,'']]],
+  ['remove_68',['remove',['../classrbjson_1_1Object.html#aab0785202f5609b50a2c517f4be6e1a8',1,'rbjson::Object::remove()'],['../classrbjson_1_1Array.html#ae5d5e07d40e3968b6cd727cd93d5e4fa',1,'rbjson::Array::remove()']]]
 ];
