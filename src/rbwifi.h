@@ -2,8 +2,12 @@
 
 #include <atomic>
 
+#if defined(ESP_IDF_VERSION_VAL)
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 1, 0)
 #include <esp_event.h>
+#else
+#include <esp_event_loop.h>
+#endif
 #else
 #include <esp_event_loop.h>
 #endif
