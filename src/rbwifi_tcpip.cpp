@@ -1,5 +1,9 @@
-#include "esp_log.h"
 #include "esp_wifi.h"
+
+#ifndef _ESP_NETIF_H_
+
+#include "esp_log.h"
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 #include "nvs_flash.h"
@@ -16,13 +20,9 @@ class WiFiInitializer {
 
 public:
     WiFiInitializer() {
-#ifdef _ESP_NETIF_H_
-        esp_netif_init();
-#else
         tcpip_adapter_init();
-#endif
 
-        ESP_ERROR_CHECK(esp_event_loop_init(&WiFi::eventHandler, NULL));
+        ESP_ERROR_CHECK(esp_event_loop_init(&WiFi::eventHandler_tcpip, NULL));
 
         wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
         cfg.nvs_enable = 0;
@@ -84,7 +84,7 @@ void WiFi::startAp(const char* ssid, const char* pass, uint8_t channel) {
     esp_wifi_set_bandwidth(WIFI_IF_AP, WIFI_BW_HT20);
 }
 
-esp_err_t WiFi::eventHandler(void* ctx, system_event_t* event) {
+esp_err_t WiFi::eventHandler_tcpip(void* ctx, system_event_t* event) {
     switch (event->event_id) {
     case SYSTEM_EVENT_STA_START:
         ESP_LOGI(TAG, "SYSTEM_EVENT_STA_START");
@@ -96,18 +96,8 @@ esp_err_t WiFi::eventHandler(void* ctx, system_event_t* event) {
         tcpip_adapter_dhcpc_stop(TCPIP_ADAPTER_IF_STA);
         break;
     case SYSTEM_EVENT_STA_GOT_IP: {
-#ifdef _ESP_NETIF_H_
-        char buf[16];
-#endif
-
         ESP_LOGI(TAG, "SYSTEM_EVENT_STA_GOT_IP");
-        ESP_LOGI(TAG, "Got IP: %s\n",
-#ifdef _ESP_NETIF_H_
-            esp_ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip, buf, sizeof(buf))
-#else
-            ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip)
-#endif
-        );
+        ESP_LOGI(TAG, "Got IP: %s\n", ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
         m_ip.store(event->event_info.got_ip.ip_info.ip.addr);
         break;
     }
@@ -156,3 +146,5 @@ esp_err_t WiFi::eventHandler(void* ctx, system_event_t* event) {
 }
 
 }; // namespace rb
+
+#endif

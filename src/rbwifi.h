@@ -2,7 +2,12 @@
 
 #include <atomic>
 
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 1, 0)
+#include <esp_event.h>
+#else
 #include <esp_event_loop.h>
+#endif
+
 #include <lwip/ip4_addr.h>
 
 namespace rb {
@@ -27,7 +32,9 @@ public:
 private:
     static void init();
 
-    static esp_err_t eventHandler(void* ctx, system_event_t* event);
+    static esp_err_t eventHandler_tcpip(void* ctx, system_event_t* event);
+    static void eventHandler_netif(void* arg, esp_event_base_t event_base,
+        int32_t event_id, void* event_data);
 
     static std::atomic<uint32_t> m_ip;
 };
