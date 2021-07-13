@@ -14,7 +14,7 @@
             "maintainer": true
         }
     ],
-    "version": "11.1.0",
+    "version": "11.1.1",
     "frameworks": [
         "espidf",
         "arduino"
