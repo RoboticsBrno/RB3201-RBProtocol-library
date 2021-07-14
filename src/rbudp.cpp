@@ -64,7 +64,7 @@ Udp::CallbackHandle Udp::onReceive(uint16_t port, std::function<void(const std::
         self.m_open_sockets[port] = fd;
     }
 
-    auto info = std::make_unique<CallbackInfo>();
+    std::unique_ptr<CallbackInfo> info(new CallbackInfo);
     info->callback = std::move(callback);
     info->port = port;
 
