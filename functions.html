@@ -88,8 +88,13 @@ $(function() {
 <li>callback_t
 : <a class="el" href="classrb_1_1Protocol.html#ae12795c988e29b9d6fb5bf6af218c24d">rb::Protocol</a>
 </li>
+<li>CallbackHandle
+: <a class="el" href="classrb_1_1TcpSocket.html#affa754d12344e6ce076bb2607462de68">rb::TcpSocket</a>
+, <a class="el" href="classrb_1_1Udp.html#aa7e0c8c6eab19740221f520143d6104e">rb::Udp</a>
+</li>
 <li>connect()
-: <a class="el" href="classrb_1_1WiFi.html#a4c1647a23a22a9615c0c410647b6820f">rb::WiFi</a>
+: <a class="el" href="classrb_1_1Tcp.html#abad4dc6b322a7c80c42f068666006aa6">rb::Tcp</a>
+, <a class="el" href="classrb_1_1WiFi.html#a4c1647a23a22a9615c0c410647b6820f">rb::WiFi</a>
 </li>
 <li>contains()
 : <a class="el" href="classrbjson_1_1Object.html#ab7ed964aaeaf13a0bd848bf23cdc8eec">rbjson::Object</a>
@@ -178,6 +183,9 @@ $(function() {
 <li>isNil()
 : <a class="el" href="classrbjson_1_1Value.html#a678f615b7df5a6e52f6a161900d856a9">rbjson::Value</a>
 </li>
+<li>isOpen()
+: <a class="el" href="classrb_1_1TcpSocket.html#a8b6f95340a6397b9bf09b41f696f1899">rb::TcpSocket</a>
+</li>
 </ul>
 
 
@@ -211,6 +219,13 @@ $(function() {
 <li>OBJECT
 : <a class="el" href="classrbjson_1_1Value.html#a5085e791ce4f005ee78085334b7cf5cdae19bb4f6b3dd7730008582cf48f92a4f">rbjson::Value</a>
 </li>
+<li>onReceive()
+: <a class="el" href="classrb_1_1TcpSocket.html#ac781c66b982c8b623cae3f9bbf133c04">rb::TcpSocket</a>
+, <a class="el" href="classrb_1_1Udp.html#a39cad79f6076835d635cdaaf891ece7e">rb::Udp</a>
+</li>
+<li>openSocket()
+: <a class="el" href="classrb_1_1Udp.html#ae4e24371caa57862aac3d59bade85872">rb::Udp</a>
+</li>
 </ul>
 
 
@@ -232,12 +247,18 @@ $(function() {
 : <a class="el" href="classrbjson_1_1Array.html#ae5d5e07d40e3968b6cd727cd93d5e4fa">rbjson::Array</a>
 , <a class="el" href="classrbjson_1_1Object.html#aab0785202f5609b50a2c517f4be6e1a8">rbjson::Object</a>
 </li>
+<li>removeCallback()
+: <a class="el" href="classrb_1_1TcpSocket.html#a17f2b156f7b89f8542994d15ba8211b5">rb::TcpSocket</a>
+, <a class="el" href="classrb_1_1Udp.html#ad82a2b3d0c9188fdb50cd97b6220d8c4">rb::Udp</a>
+</li>
 </ul>
 
 
 <h3><a id="index_s"></a>- s -</h3><ul>
 <li>send()
 : <a class="el" href="classrb_1_1Protocol.html#abedace743927a42aa20c3a55c36ffcbc">rb::Protocol</a>
+, <a class="el" href="classrb_1_1TcpSocket.html#a0606fce812a8b0fd1db76e0ed38e2a06">rb::TcpSocket</a>
+, <a class="el" href="classrb_1_1Udp.html#a9bf6d41f2dc5d7234d4fc208f2d1e9f3">rb::Udp</a>
 </li>
 <li>send_log()
 : <a class="el" href="classrb_1_1Protocol.html#a670cc142fd37b6ada10bb6b40d9916a4">rb::Protocol</a>
@@ -286,6 +307,16 @@ $(function() {
 
 
 <h3><a id="index_t"></a>- t -</h3><ul>
+<li>Tcp
+: <a class="el" href="classrb_1_1TcpSocket.html#ab70ea99b534c42cce379afba2aa54ce5">rb::TcpSocket</a>
+, <a class="el" href="classrb_1_1TcpSocketReal.html#ab70ea99b534c42cce379afba2aa54ce5">rb::TcpSocketReal</a>
+</li>
+<li>TcpSocket
+: <a class="el" href="classrb_1_1TcpSocketReal.html#aa8b32310b01d4bb702d6bcb969d5f130">rb::TcpSocketReal</a>
+</li>
+<li>TcpSocketReal
+: <a class="el" href="classrb_1_1Tcp.html#a6827409be9c8f0e2ec214c9fb88a8cfa">rb::Tcp</a>
+</li>
 <li>type_t
 : <a class="el" href="classrbjson_1_1Value.html#a5085e791ce4f005ee78085334b7cf5cd">rbjson::Value</a>
 </li>
@@ -300,6 +331,9 @@ $(function() {
 
 
 <h3><a id="index_w"></a>- w -</h3><ul>
+<li>waitForIp()
+: <a class="el" href="classrb_1_1WiFi.html#a3af97137896fbe6326735a49454101dc">rb::WiFi</a>
+</li>
 <li>WiFi
 : <a class="el" href="classrb_1_1WiFiInitializer.html#a8278058e65dac2deaa310a5babbad769">rb::WiFiInitializer</a>
 </li>
@@ -329,6 +363,12 @@ $(function() {
 <li>~String()
 : <a class="el" href="classrbjson_1_1String.html#ae0bb8a42e5e03d6f991575f46e6616bc">rbjson::String</a>
 </li>
+<li>~TcpSocket()
+: <a class="el" href="classrb_1_1TcpSocket.html#a092cea7ff05d25625214f75e2fe4d032">rb::TcpSocket</a>
+</li>
+<li>~TcpSocketReal()
+: <a class="el" href="classrb_1_1TcpSocketReal.html#ae923a6196eedebbeef9dabbf14b1e504">rb::TcpSocketReal</a>
+</li>
 <li>~Value()
 : <a class="el" href="classrbjson_1_1Value.html#a878b07b391259fdaba20ff9c71fd2df1">rbjson::Value</a>
 </li>
@@ -339,7 +379,7 @@ $(function() {
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Jul 13 2021 13:58:10 for RBProtocol by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Jul 14 2021 10:28:59 for RBProtocol by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

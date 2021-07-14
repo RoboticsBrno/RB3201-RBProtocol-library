@@ -89,7 +89,10 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memdesc:a3d7324abf87549a6b2294e1424b5e5a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return current IP address of the ESP32.  <a href="classrb_1_1WiFi.html#a3d7324abf87549a6b2294e1424b5e5a3">More...</a><br /></td></tr>
 <tr class="separator:a3d7324abf87549a6b2294e1424b5e5a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa1836250e248f309a716a9cc81a771df"><td class="memItemLeft" align="right" valign="top">static uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classrb_1_1WiFi.html#aa1836250e248f309a716a9cc81a771df">getIp</a> ()</td></tr>
+<tr class="memdesc:aa1836250e248f309a716a9cc81a771df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Blocks until IP is assigned.  <a href="classrb_1_1WiFi.html#aa1836250e248f309a716a9cc81a771df">More...</a><br /></td></tr>
 <tr class="separator:aa1836250e248f309a716a9cc81a771df"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3af97137896fbe6326735a49454101dc"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classrb_1_1WiFi.html#a3af97137896fbe6326735a49454101dc">waitForIp</a> (TickType_t maxDelay=portMAX_DELAY)</td></tr>
+<tr class="separator:a3af97137896fbe6326735a49454101dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
 Friends</h2></td></tr>
@@ -161,6 +164,8 @@ Friends</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
+<p>Blocks until IP is assigned. </p>
+
 </div>
 </div>
 <a id="a3d7324abf87549a6b2294e1424b5e5a3"></a>
@@ -207,6 +212,32 @@ Friends</h2></td></tr>
 
 </div>
 </div>
+<a id="a3af97137896fbe6326735a49454101dc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3af97137896fbe6326735a49454101dc">&#9670;&nbsp;</a></span>waitForIp()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static bool rb::WiFi::waitForIp </td>
+          <td>(</td>
+          <td class="paramtype">TickType_t&#160;</td>
+          <td class="paramname"><em>maxDelay</em> = <code>portMAX_DELAY</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <h2 class="groupheader">Friends And Related Function Documentation</h2>
 <a id="a7b2a721d465d5ff7b9617c4ece2a64f9"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7b2a721d465d5ff7b9617c4ece2a64f9">&#9670;&nbsp;</a></span>WiFiInitializer</h2>
@@ -237,7 +268,7 @@ Friends</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Jul 13 2021 13:58:10 for RBProtocol by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Jul 14 2021 10:28:58 for RBProtocol by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

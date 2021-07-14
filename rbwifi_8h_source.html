@@ -95,26 +95,36 @@ $(function() {
 <div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160; </div>
 <div class="line"><a name="l00034"></a><span class="lineno"><a class="line" href="classrb_1_1WiFi.html#aa1836250e248f309a716a9cc81a771df">   34</a></span>&#160;    <span class="keyword">static</span> uint32_t <a class="code" href="classrb_1_1WiFi.html#aa1836250e248f309a716a9cc81a771df">getIp</a>() { <span class="keywordflow">return</span> m_ip.load(); }</div>
 <div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160; </div>
-<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;<span class="keyword">private</span>:</div>
-<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;    <span class="keyword">static</span> <span class="keywordtype">void</span> init();</div>
-<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160; </div>
-<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;    <span class="keyword">static</span> esp_err_t eventHandler_tcpip(<span class="keywordtype">void</span>* ctx, system_event_t* event);</div>
-<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;    <span class="keyword">static</span> <span class="keywordtype">void</span> eventHandler_netif(<span class="keywordtype">void</span>* arg, esp_event_base_t event_base,</div>
-<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;        int32_t event_id, <span class="keywordtype">void</span>* event_data);</div>
-<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160; </div>
-<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;    <span class="keyword">static</span> std::atomic&lt;uint32_t&gt; m_ip;</div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;};</div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;};</div>
+<div class="line"><a name="l00037"></a><span class="lineno"><a class="line" href="classrb_1_1WiFi.html#a3af97137896fbe6326735a49454101dc">   37</a></span>&#160;    <span class="keyword">static</span> <span class="keywordtype">bool</span> <a class="code" href="classrb_1_1WiFi.html#a3af97137896fbe6326735a49454101dc">waitForIp</a>(TickType_t maxDelay = portMAX_DELAY) {</div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;        <span class="keyword">const</span> TickType_t step = pdMS_TO_TICKS(50);</div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;        <span class="keywordflow">while</span> (<a class="code" href="classrb_1_1WiFi.html#aa1836250e248f309a716a9cc81a771df">getIp</a>() == 0 &amp;&amp; maxDelay &gt;= step) {</div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;            vTaskDelay(step);</div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;            maxDelay -= step;</div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;        }</div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="classrb_1_1WiFi.html#aa1836250e248f309a716a9cc81a771df">getIp</a>() != 0;</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;    }</div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160; </div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;<span class="keyword">private</span>:</div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;    <span class="keyword">static</span> <span class="keywordtype">void</span> init();</div>
+<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160; </div>
+<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;    <span class="keyword">static</span> esp_err_t eventHandler_tcpip(<span class="keywordtype">void</span>* ctx, system_event_t* event);</div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;    <span class="keyword">static</span> <span class="keywordtype">void</span> eventHandler_netif(<span class="keywordtype">void</span>* arg, esp_event_base_t event_base,</div>
+<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;        int32_t event_id, <span class="keywordtype">void</span>* event_data);</div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160; </div>
+<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;    <span class="keyword">static</span> std::atomic&lt;uint32_t&gt; m_ip;</div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;};</div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;};</div>
 <div class="ttc" id="aclassrb_1_1WiFiInitializer_html"><div class="ttname"><a href="classrb_1_1WiFiInitializer.html">rb::WiFiInitializer</a></div><div class="ttdef"><b>Definition:</b> rbwifi_tcpip.cpp:18</div></div>
 <div class="ttc" id="aclassrb_1_1WiFi_html"><div class="ttname"><a href="classrb_1_1WiFi.html">rb::WiFi</a></div><div class="ttdoc">Helper class for connecting to the wifi.</div><div class="ttdef"><b>Definition:</b> rbwifi.h:23</div></div>
+<div class="ttc" id="aclassrb_1_1WiFi_html_a3af97137896fbe6326735a49454101dc"><div class="ttname"><a href="classrb_1_1WiFi.html#a3af97137896fbe6326735a49454101dc">rb::WiFi::waitForIp</a></div><div class="ttdeci">static bool waitForIp(TickType_t maxDelay=portMAX_DELAY)</div><div class="ttdef"><b>Definition:</b> rbwifi.h:37</div></div>
 <div class="ttc" id="aclassrb_1_1WiFi_html_a3d7324abf87549a6b2294e1424b5e5a3"><div class="ttname"><a href="classrb_1_1WiFi.html#a3d7324abf87549a6b2294e1424b5e5a3">rb::WiFi::startAp</a></div><div class="ttdeci">static void startAp(const char *ssid, const char *password, uint8_t channel=6)</div><div class="ttdoc">Return current IP address of the ESP32.</div><div class="ttdef"><b>Definition:</b> rbwifi_tcpip.cpp:60</div></div>
 <div class="ttc" id="aclassrb_1_1WiFi_html_a4c1647a23a22a9615c0c410647b6820f"><div class="ttname"><a href="classrb_1_1WiFi.html#a4c1647a23a22a9615c0c410647b6820f">rb::WiFi::connect</a></div><div class="ttdeci">static void connect(const char *ssid, const char *password)</div><div class="ttdoc">&lt; Connect to a wifi network with given ssid (name) and password</div><div class="ttdef"><b>Definition:</b> rbwifi_tcpip.cpp:45</div></div>
-<div class="ttc" id="aclassrb_1_1WiFi_html_aa1836250e248f309a716a9cc81a771df"><div class="ttname"><a href="classrb_1_1WiFi.html#aa1836250e248f309a716a9cc81a771df">rb::WiFi::getIp</a></div><div class="ttdeci">static uint32_t getIp()</div><div class="ttdef"><b>Definition:</b> rbwifi.h:34</div></div>
+<div class="ttc" id="aclassrb_1_1WiFi_html_aa1836250e248f309a716a9cc81a771df"><div class="ttname"><a href="classrb_1_1WiFi.html#aa1836250e248f309a716a9cc81a771df">rb::WiFi::getIp</a></div><div class="ttdeci">static uint32_t getIp()</div><div class="ttdoc">Blocks until IP is assigned.</div><div class="ttdef"><b>Definition:</b> rbwifi.h:34</div></div>
 <div class="ttc" id="anamespacerb_html"><div class="ttname"><a href="namespacerb.html">rb</a></div><div class="ttdef"><b>Definition:</b> rbprotocol.cpp:26</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Jul 13 2021 13:58:10 for RBProtocol by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Jul 14 2021 10:28:58 for RBProtocol by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>
