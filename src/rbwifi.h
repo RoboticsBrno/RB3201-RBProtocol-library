@@ -33,6 +33,16 @@ public:
     //!< Return current IP address of the ESP32
     static uint32_t getIp() { return m_ip.load(); }
 
+    //!< Blocks until IP is assigned
+    static bool waitForIp(TickType_t maxDelay = portMAX_DELAY) {
+        const TickType_t step = pdMS_TO_TICKS(50);
+        while (getIp() == 0 && maxDelay >= step) {
+            vTaskDelay(step);
+            maxDelay -= step;
+        }
+        return getIp() != 0;
+    }
+
 private:
     static void init();
 

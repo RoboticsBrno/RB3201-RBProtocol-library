@@ -23,7 +23,7 @@ int Udp::send(uint8_t* data, size_t size, uint16_t port, const std::string& ip) 
     struct sockaddr_in addr = {
         .sin_len = sizeof(struct sockaddr_in),
         .sin_family = AF_INET,
-        .sin_port = port,
+        .sin_port = htons(port),
         .sin_addr = { 0 },
         .sin_zero = { 0 },
     };
@@ -166,8 +166,10 @@ void Udp::readTask(void*) {
                     break;
                 }
 
-                if (res < buf.size())
+                if (res < buf.size() || buf.size() >= 1024) {
+                    buf.resize(res);
                     break;
+                }
                 buf.resize(buf.size() + 16);
             }
 
