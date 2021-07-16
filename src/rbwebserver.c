@@ -47,7 +47,7 @@ typedef struct {
     const char* mime_type;
 } mime_map;
 
-mime_map meme_types[] = {
+static const mime_map meme_types[] = {
     { ".css", "text/css" },
     { ".html", "text/html" },
     { ".jpeg", "image/jpeg" },
@@ -59,15 +59,15 @@ mime_map meme_types[] = {
     { NULL, NULL },
 };
 
-char* default_mime_type = "text/plain";
+static const char* default_mime_type = "text/plain";
 
-void rio_readinitb(rio_t* rp, int fd) {
+static void rio_readinitb(rio_t* rp, int fd) {
     rp->rio_fd = fd;
     rp->rio_cnt = 0;
     rp->rio_bufptr = rp->rio_buf;
 }
 
-ssize_t writen(int fd, void* usrbuf, size_t n) {
+static ssize_t writen(int fd, void* usrbuf, size_t n) {
     size_t nleft = n;
     ssize_t nwritten;
     char* bufp = usrbuf;
@@ -122,7 +122,7 @@ static ssize_t rio_read(rio_t* rp, char* usrbuf, size_t n) {
 /*
  * rio_readlineb - robustly read a text line (buffered)
  */
-ssize_t rio_readlineb(rio_t* rp, void* usrbuf, size_t maxlen) {
+static ssize_t rio_readlineb(rio_t* rp, void* usrbuf, size_t maxlen) {
     int n, rc;
     char c, *bufp = usrbuf;
 
@@ -146,7 +146,7 @@ ssize_t rio_readlineb(rio_t* rp, void* usrbuf, size_t maxlen) {
 static const char* get_mime_type(char* filename) {
     char* dot = strrchr(filename, '.');
     if (dot) { // strrchar Locate last occurrence of character in string
-        mime_map* map = meme_types;
+        const mime_map* map = meme_types;
         while (map->extension) {
             if (strcmp(map->extension, dot) == 0) {
                 return map->mime_type;
@@ -157,7 +157,7 @@ static const char* get_mime_type(char* filename) {
     return default_mime_type;
 }
 
-int open_listenfd(int port) {
+static int open_listenfd(int port) {
     int listenfd, optval = 1;
     struct sockaddr_in serveraddr;
 
@@ -186,7 +186,7 @@ int open_listenfd(int port) {
     return listenfd;
 }
 
-void url_decode(char* src, char* dest, int max) {
+static void url_decode(char* src, char* dest, int max) {
     char* p = src;
 
     int prefix_len = snprintf(dest, FILENAME_SIZE, "%s/", WORKING_DIRECTORY);
@@ -232,7 +232,7 @@ nogzip:
     return open(req->filename, O_RDONLY);
 }
 
-void parse_request(int fd, http_request* req) {
+static void parse_request(int fd, http_request* req) {
     rio_t rio;
     char buf[MAXLINE], method[MAXLINE], uri[MAXLINE];
     req->offset = 0;
@@ -272,12 +272,12 @@ void parse_request(int fd, http_request* req) {
     url_decode(filename, req->filename, FILENAME_SIZE);
 }
 
-void log_access(int status, struct sockaddr_in* c_addr, http_request* req) {
+static void log_access(int status, struct sockaddr_in* c_addr, http_request* req) {
     ESP_LOGI(TAG, "%s:%d %d - %s", inet_ntoa(c_addr->sin_addr),
         ntohs(c_addr->sin_port), status, req->filename);
 }
 
-void client_error(int fd, int status, char* msg, char* longmsg) {
+static void client_error(int fd, int status, char* msg, char* longmsg) {
     char buf[MAXLINE];
     sprintf(buf, "HTTP/1.1 %d %s\r\n", status, msg);
     sprintf(buf + strlen(buf),
@@ -316,7 +316,7 @@ static ssize_t sendfile(char* buf, const size_t bufsize, int out_fd, int in_fd, 
     return res;
 }
 
-void serve_static(int out_fd, int in_fd, http_request* req,
+static void serve_static(int out_fd, int in_fd, http_request* req,
     size_t total_size) {
     char buf[256];
     int buf_len = 0;
@@ -353,7 +353,7 @@ void serve_static(int out_fd, int in_fd, http_request* req,
     }
 }
 
-void process(int fd, struct sockaddr_in* clientaddr) {
+static void process(int fd, struct sockaddr_in* clientaddr) {
     ESP_LOGD(TAG, "accept request, fd is %d\n", fd);
     http_request req;
     parse_request(fd, &req);
