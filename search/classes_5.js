@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['string_119',['String',['../classrbjson_1_1String.html',1,'rbjson']]]
+  ['string_0',['String',['../classrbjson_1_1String.html',1,'rbjson']]]
 ];
