@@ -16,9 +16,13 @@
 #include "esp_spiffs.h"
 #include "freertos/task.h"
 
+#include "rbwebserver.h"
+
 #define TAG "RbWebServer"
 
 #define WORKING_DIRECTORY "/spiffs"
+
+#define EXTRA_DIRECTORY WORKING_DIRECTORY "/extra/"
 
 #define LISTENQ 8 /* second argument to listen() */
 #define MAXLINE 256 /* max length of a line */
@@ -60,6 +64,12 @@ static const mime_map meme_types[] = {
 };
 
 static const char* default_mime_type = "text/plain";
+
+static void (*extra_path_callback)(const char *path, int out_fd) = NULL;
+
+void rb_web_set_extra_callback(void (*callback)(const char *path, int out_fd)) {
+    extra_path_callback = callback;
+}
 
 static void rio_readinitb(rio_t* rp, int fd) {
     rp->rio_fd = fd;
@@ -357,6 +367,17 @@ static void process(int fd, struct sockaddr_in* clientaddr) {
     ESP_LOGD(TAG, "accept request, fd is %d\n", fd);
     http_request req;
     parse_request(fd, &req);
+
+    if(strncmp(req.filename, EXTRA_DIRECTORY, sizeof(EXTRA_DIRECTORY)-1) == 0) {
+        if(extra_path_callback == NULL) {
+            client_error(fd, 400, "Error", "No extra_path_callback specified.");
+            return;
+        }
+
+        extra_path_callback(req.filename + sizeof(EXTRA_DIRECTORY)-1, fd);
+        close(fd);
+        return;
+    }
 
     struct stat sbuf;
     int status = 200;
