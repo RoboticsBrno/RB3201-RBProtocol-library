@@ -1,6 +1,7 @@
 #include "esp_wifi.h"
+#include "rbwifi.h"
 
-#ifdef _ESP_NETIF_H_
+#ifdef RBPROTOCOL_USE_NETIF
 
 #include "esp_log.h"
 #include "esp_netif.h"
@@ -8,8 +9,6 @@
 #include "freertos/event_groups.h"
 #include "nvs_flash.h"
 #include <string.h>
-
-#include "rbwifi.h"
 
 #define TAG "RbWifi"
 

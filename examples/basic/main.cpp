@@ -8,6 +8,13 @@
 #include "rbprotocol.h"
 #include "rbwebserver.h"
 
+#ifndef LX16A_ARDUINO
+void setup();
+extern "C" void app_main() {
+    setup();
+}
+#endif
+
 void onPktReceived(const std::string& command, rbjson::Object* pkt) {
     if (command == "joy") {
         printf("Joy: ");
@@ -22,7 +29,7 @@ void onPktReceived(const std::string& command, rbjson::Object* pkt) {
     }
 }
 
-extern "C" void app_main() {
+void setup() {
     // Create web server, serves static files from the spiffs memory
     rb_web_start(80);
 
@@ -38,4 +45,7 @@ extern "C" void app_main() {
             prot.send_log("Tick #%d\n", i++);
         }
     }
+}
+
+void loop() {
 }
