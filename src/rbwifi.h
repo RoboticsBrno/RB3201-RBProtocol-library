@@ -4,6 +4,7 @@
 
 #if defined(ESP_IDF_VERSION_VAL)
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 1, 0)
+#define RBPROTOCOL_USE_NETIF 1
 #include <esp_event.h>
 #else
 #include <esp_event_loop.h>
@@ -46,10 +47,12 @@ public:
 private:
     static void init();
 
+#ifndef RBPROTOCOL_USE_NETIF
     static esp_err_t eventHandler_tcpip(void* ctx, system_event_t* event);
+#else
     static void eventHandler_netif(void* arg, esp_event_base_t event_base,
         int32_t event_id, void* event_data);
-
+#endif
     static std::atomic<uint32_t> m_ip;
 };
 };

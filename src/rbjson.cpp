@@ -6,7 +6,7 @@
 
 #include "esp_log.h"
 
-#include "jsmn.h"
+#include "./jsmn.h"
 #include "rbjson.h"
 
 #include "mpaland-printf/printf.h"
