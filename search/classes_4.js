@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['protocol_0',['Protocol',['../classrb_1_1Protocol.html',1,'rb']]]
+  ['object_0',['Object',['../classrbjson_1_1Object.html',1,'rbjson']]]
 ];

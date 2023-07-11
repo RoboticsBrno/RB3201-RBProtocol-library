@@ -1,8 +1,7 @@
 var searchData=
 [
-  ['object_0',['Object',['../classrbjson_1_1Object.html#a075332195df15be42dd8d40da9a339e8',1,'rbjson::Object']]],
-  ['object_1',['OBJECT',['../classrbjson_1_1Value.html#a5085e791ce4f005ee78085334b7cf5cdae19bb4f6b3dd7730008582cf48f92a4f',1,'rbjson::Value']]],
-  ['object_2',['Object',['../classrbjson_1_1Object.html',1,'rbjson']]],
-  ['onreceive_3',['onReceive',['../classrb_1_1TcpSocket.html#ac781c66b982c8b623cae3f9bbf133c04',1,'rb::TcpSocket::onReceive(std::function&lt; void(const std::vector&lt; uint8_t &gt; &amp;data)&gt; callback)'],['../classrb_1_1TcpSocket.html#a513c06de09e90b2805ba46e1a7ffa174',1,'rb::TcpSocket::onReceive(std::function&lt; void(const std::string &amp;text)&gt; callback)'],['../classrb_1_1Udp.html#a39cad79f6076835d635cdaaf891ece7e',1,'rb::Udp::onReceive(uint16_t port, std::function&lt; void(const std::vector&lt; uint8_t &gt; &amp;data, const std::string &amp;sourceIp)&gt; callback)'],['../classrb_1_1Udp.html#a26b83ec34f7e8fae59b73a58e9fc5542',1,'rb::Udp::onReceive(uint16_t port, std::function&lt; void(const std::string &amp;data, const std::string &amp;sourceIp)&gt; callback)']]],
-  ['opensocket_4',['openSocket',['../classrb_1_1Udp.html#ae4e24371caa57862aac3d59bade85872',1,'rb::Udp']]]
+  ['nil_0',['NIL',['../classrbjson_1_1Value.html#a5085e791ce4f005ee78085334b7cf5cda91836128fe45418240a8a6247994e425',1,'rbjson::Value']]],
+  ['nil_1',['Nil',['../classrbjson_1_1Nil.html',1,'rbjson']]],
+  ['number_2',['NUMBER',['../classrbjson_1_1Value.html#a5085e791ce4f005ee78085334b7cf5cda067e473e4eb6f7d0f07ac52d6aef76fd',1,'rbjson::Value']]],
+  ['number_3',['Number',['../classrbjson_1_1Number.html#a2573dafa412036a93f4de5f2441b2cfe',1,'rbjson::Number::Number()'],['../classrbjson_1_1Number.html',1,'rbjson::Number']]]
 ];

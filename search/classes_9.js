@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['wifi_0',['WiFi',['../classrb_1_1WiFi.html',1,'rb']]],
-  ['wifiinitializer_1',['WiFiInitializer',['../classrb_1_1WiFiInitializer.html',1,'rb']]]
+  ['value_0',['Value',['../classrbjson_1_1Value.html',1,'rbjson']]]
 ];

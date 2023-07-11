@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['rbprotocol_5faxis_5fmax_0',['RBPROTOCOL_AXIS_MAX',['../rbprotocol_8h.html#aff3b9e51cfdfcd65409f3e43b11d2055',1,'rbprotocol.h']]],
-  ['rbprotocol_5faxis_5fmin_1',['RBPROTOCOL_AXIS_MIN',['../rbprotocol_8h.html#a296e089ddda9b68fcd422f246d45c873',1,'rbprotocol.h']]],
-  ['rbprotocol_5fport_2',['RBPROTOCOL_PORT',['../rbprotocol_8h.html#af4caabb7a561cb476fb6bd2235cf1009',1,'rbprotocol.h']]]
+  ['printf_5fdisable_5fsupport_5fexponential_0',['PRINTF_DISABLE_SUPPORT_EXPONENTIAL',['../printf_8h.html#a5d38dbfec5129e28107f5302ab8a9518',1,'printf.h']]],
+  ['printf_5fdisable_5fsupport_5fptrdiff_5ft_1',['PRINTF_DISABLE_SUPPORT_PTRDIFF_T',['../printf_8h.html#a09e88431863279a860865545f1e6e6cc',1,'printf.h']]]
 ];

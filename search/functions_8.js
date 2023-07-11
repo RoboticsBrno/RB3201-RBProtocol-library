@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['number_0',['Number',['../classrbjson_1_1Number.html#a2573dafa412036a93f4de5f2441b2cfe',1,'rbjson::Number']]]
+  ['members_0',['members',['../classrbjson_1_1Object.html#ad30b0c80d1dd6d0acb11c25c9b3a0c0e',1,'rbjson::Object']]]
 ];
