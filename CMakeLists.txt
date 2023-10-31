@@ -2,13 +2,15 @@ cmake_minimum_required(VERSION 3.0)
 
 set(SRCS
     "src/rbjson.cpp"
-    "src/rbprotocol.cpp"
+    "src/rbprotocoludp.cpp"
+    "src/rbprotocolws.cpp"
     "src/rbtcp.cpp"
     "src/rbudp.cpp"
     "src/rbwifi_netif.cpp"
     "src/rbwifi_tcpip.cpp"
     "src/mpaland-printf/printf.c"
     "src/rbwebserver.c"
+    "src/rbwebsockets.c"
 )
 
 idf_component_register(

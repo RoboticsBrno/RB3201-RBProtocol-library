@@ -17,17 +17,13 @@
 #include "freertos/task.h"
 
 #include "rbwebserver.h"
+#include "rbwebserver_internal.h"
 
 #define TAG "RbWebServer"
 
 #define WORKING_DIRECTORY "/spiffs"
 
 #define EXTRA_DIRECTORY WORKING_DIRECTORY "/extra/"
-
-#define LISTENQ 8 /* second argument to listen() */
-#define MAXLINE 256 /* max length of a line */
-#define RIO_BUFSIZE 256
-#define FILENAME_SIZE 64
 
 typedef struct {
     int rio_fd; /* descriptor for this buf */
@@ -38,13 +34,6 @@ typedef struct {
 
 /* Simplifies calls to bind(), connect(), and accept() */
 typedef struct sockaddr SA;
-
-typedef struct {
-    char filename[FILENAME_SIZE];
-    off_t offset; /* for support Range */
-    size_t end;
-    uint8_t servingGzip;
-} http_request;
 
 typedef struct {
     const char* extension;
@@ -67,8 +56,25 @@ static const char* default_mime_type = "text/plain";
 
 static void (*extra_path_callback)(const char *path, int out_fd) = NULL;
 
+static void *ws_protocol = NULL;
+
 void rb_web_set_extra_callback(void (*callback)(const char *path, int out_fd)) {
     extra_path_callback = callback;
+}
+
+void rb_web_set_wsprotocol(void *wsProtocolInstance) {
+    if(ws_protocol != NULL && ws_protocol != wsProtocolInstance) {
+        ESP_LOGE(TAG, "rb_web_set_wsprotocol was called twice with different instances!");
+    }
+    ws_protocol = wsProtocolInstance;
+}
+
+void rb_web_clear_wsprotocol(void *wsProtocolInstance) {
+    if(ws_protocol == wsProtocolInstance) {
+        ws_protocol = NULL;
+    } else {
+        ESP_LOGE(TAG, "rb_web_clear_wsprotocol was called twice with different instance than rb_web_set_wsprotocol!");
+    }
 }
 
 static void rio_readinitb(rio_t* rp, int fd) {
@@ -77,7 +83,7 @@ static void rio_readinitb(rio_t* rp, int fd) {
     rp->rio_bufptr = rp->rio_buf;
 }
 
-static ssize_t writen(int fd, void* usrbuf, size_t n) {
+ssize_t writen(int fd, void* usrbuf, size_t n) {
     size_t nleft = n;
     ssize_t nwritten;
     char* bufp = usrbuf;
@@ -244,14 +250,18 @@ nogzip:
 
 static void parse_request(int fd, http_request* req) {
     rio_t rio;
-    char buf[MAXLINE], method[MAXLINE], uri[MAXLINE];
+    char buf[MAXLINE], method[10], uri[MAXLINE];
+
+    uint8_t websocket_upgrade_headers = 0;
+
     req->offset = 0;
     req->end = 0; /* default */
     req->servingGzip = 0;
 
     rio_readinitb(&rio, fd);
     rio_readlineb(&rio, buf, MAXLINE);
-    sscanf(buf, "%s %s", method, uri); /* version is not cared */
+
+    sscanf(buf, "%9s %255s", method, uri); /* version is not cared */
     /* read all */
     while (buf[0] != '\n' && buf[1] != '\n') { /* \n || \r\n */
         rio_readlineb(&rio, buf, MAXLINE);
@@ -262,11 +272,33 @@ static void parse_request(int fd, http_request* req) {
                 req->end++;
         } else if (strstr(buf, "Accept-Encoding: ") == buf && strstr(buf + 17, "gzip")) {
             req->servingGzip = 1;
+        } else if(strstr(buf, "Upgrade: websocket") == buf) {
+            ++websocket_upgrade_headers;
+        } else if(strstr(buf, "Connection: ") == buf && strstr(buf+12, "Upgrade")) {
+            ++websocket_upgrade_headers;
+        }
+        //      len(Sec-WebSocket-Key: ) + len(key) + \r\n
+        else if(strlen(buf) == 19 + 24 + 2 && strstr(buf, "Sec-WebSocket-Key: ") == buf) {
+            ++websocket_upgrade_headers;
+            memcpy(req->ws_key, buf + 19, 24);
+        } else if(strstr(buf, "Sec-WebSocket-Version: ") == buf) {
+            sscanf(buf + 23, "%ld", &req->ws_version);
         }
     }
+
+    // Zero out the version if not all headers were received
+    if(req->ws_version != 0 && (websocket_upgrade_headers != 3 || strcmp(method, "GET") != 0)) {
+        req->ws_version = 0;
+    }
+
     char* filename = uri;
     if (uri[0] == '/') {
         filename = uri + 1;
+
+        if (filename[0] == 0) {
+            strcpy(filename, "index.html");
+        }
+
         int length = strlen(filename);
         if (length == 0) {
             filename = ".";
@@ -282,12 +314,12 @@ static void parse_request(int fd, http_request* req) {
     url_decode(filename, req->filename, FILENAME_SIZE);
 }
 
-static void log_access(int status, struct sockaddr_in* c_addr, http_request* req) {
+void log_access(int status, struct sockaddr_in* c_addr, http_request* req) {
     ESP_LOGI(TAG, "%s:%d %d - %s", inet_ntoa(c_addr->sin_addr),
         ntohs(c_addr->sin_port), status, req->filename);
 }
 
-static void client_error(int fd, int status, char* msg, char* longmsg) {
+void client_error(int fd, int status, const char* msg, const char* longmsg) {
     char buf[MAXLINE];
     sprintf(buf, "HTTP/1.1 %d %s\r\n", status, msg);
     sprintf(buf + strlen(buf),
@@ -295,6 +327,7 @@ static void client_error(int fd, int status, char* msg, char* longmsg) {
     sprintf(buf + strlen(buf), "%s", longmsg);
     writen(fd, buf, strlen(buf));
 }
+
 
 static ssize_t sendfile(char* buf, const size_t bufsize, int out_fd, int in_fd, off_t* offset, size_t count) {
     size_t chunk;
@@ -361,27 +394,13 @@ static void serve_static(int out_fd, int in_fd, http_request* req,
         close(out_fd);
         break;
     }
+
 }
 
-static void process(int fd, struct sockaddr_in* clientaddr) {
-    ESP_LOGD(TAG, "accept request, fd is %d\n", fd);
-    http_request req;
-    parse_request(fd, &req);
-
-    if(strncmp(req.filename, EXTRA_DIRECTORY, sizeof(EXTRA_DIRECTORY)-1) == 0) {
-        if(extra_path_callback == NULL) {
-            client_error(fd, 400, "Error", "No extra_path_callback specified.");
-            return;
-        }
-
-        extra_path_callback(req.filename + sizeof(EXTRA_DIRECTORY)-1, fd);
-        close(fd);
-        return;
-    }
-
+static void process_serve_file(int fd, struct sockaddr_in* clientaddr, http_request *req) {
     struct stat sbuf;
     int status = 200;
-    int ffd = prepare_gzip(&req);
+    int ffd = prepare_gzip(req);
     if (ffd <= 0) {
         status = 404;
         char* msg = "File not found";
@@ -389,13 +408,13 @@ static void process(int fd, struct sockaddr_in* clientaddr) {
     } else {
         fstat(ffd, &sbuf);
         if (S_ISREG(sbuf.st_mode)) {
-            if (req.end == 0) {
-                req.end = sbuf.st_size;
+            if (req->end == 0) {
+                req->end = sbuf.st_size;
             }
-            if (req.offset > 0) {
+            if (req->offset > 0) {
                 status = 206;
             }
-            serve_static(fd, ffd, &req, sbuf.st_size);
+            serve_static(fd, ffd, req, sbuf.st_size);
         } else {
             status = 400;
             char* msg = "Unknow Error";
@@ -403,7 +422,38 @@ static void process(int fd, struct sockaddr_in* clientaddr) {
         }
         close(ffd);
     }
-    log_access(status, clientaddr, &req);
+    log_access(status, clientaddr, req);
+}
+
+static int process(int fd, struct sockaddr_in* clientaddr) {
+    ESP_LOGD(TAG, "accept request, fd is %d\n", fd);
+    http_request req;
+
+    parse_request(fd, &req);
+
+    if(req.ws_version != 0) {
+        if(ws_protocol == NULL) {
+            client_error(fd, 400, "WS not enabled", "");
+            return 0;
+        }
+
+        if(rb_web_handle_websocket_switch_request(fd, &req) == 0) {
+            return 1;
+        }
+        return 0;
+    } else if(strncmp(req.filename, EXTRA_DIRECTORY, sizeof(EXTRA_DIRECTORY)-1) == 0) {
+        if(extra_path_callback == NULL) {
+            client_error(fd, 400, "Error", "No extra_path_callback specified.");
+            return 0;
+        }
+
+        extra_path_callback(req.filename + sizeof(EXTRA_DIRECTORY)-1, fd);
+        close(fd);
+        return 0;
+    } else {
+        process_serve_file(fd, clientaddr, &req);
+        return 0;
+    }
 }
 
 static void tiny_web_task(void* portPtr) {
@@ -430,8 +480,11 @@ static void tiny_web_task(void* portPtr) {
     while (1) {
         connfd = accept(listenfd, (SA*)&clientaddr, &clientlen);
         if (connfd >= 0) {
-            process(connfd, &clientaddr);
-            close(connfd);
+            if(process(connfd, &clientaddr) <= 0) {
+                close(connfd);
+            } else {
+                rb_web_ws_new_connection(ws_protocol, connfd);
+            }
             continue;
         } else if (errno != EWOULDBLOCK && errno != EAGAIN) {
             ESP_LOGE(TAG, "failed to accept: %s", strerror(errno));

@@ -23,19 +23,32 @@ static int count_tok_size(jsmntok_t* tok) {
     return itr - tok;
 }
 
+
 static inline void write_string_escaped(const char* str, std::ostream& ss) {
     const char* start = str;
     const char* end = NULL;
     ss.put('"');
     while (true) {
-        end = strchr(start, '"');
+        end = strpbrk(start, "\"\\\b\f\n\r\t");
         if (end == NULL) {
             ss.write(start, strlen(start));
             ss.put('"');
             return;
         } else {
             ss.write(start, end - start);
-            ss.write("\\\"", 2);
+            ss.put('\\');
+            switch(*end) {
+                case '"':
+                case '\\':
+                    ss.put(*end);
+                    break;
+                case '\b': ss.put('b'); break;
+                case '\f': ss.put('f'); break;
+                case '\n': ss.put('n'); break;
+                case '\r': ss.put('r'); break;
+                case '\t': ss.put('t'); break;
+                default: ss.put('?'); break;
+            }
             start = end + 1;
         }
     }
