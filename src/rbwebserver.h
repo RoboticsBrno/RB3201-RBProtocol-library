@@ -1,6 +1,7 @@
 #pragma once
 
 #include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 
 #include <esp_err.h>
 
@@ -11,7 +12,7 @@ extern "C" {
 /**
  * \brief Start serving files from SPIFFS on http on port.
  */
- TaskHandle_t rb_web_start(int port);
+TaskHandle_t rb_web_start(int port);
 
 /**
  * \brief Adds another file into the web server's root.

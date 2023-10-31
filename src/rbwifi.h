@@ -34,6 +34,13 @@ public:
     //!< Return current IP address of the ESP32
     static uint32_t getIp() { return m_ip.load(); }
 
+    static std::string getIpStr() {
+        const auto ip = getIp();
+        char buf[20];
+        snprintf(buf, sizeof(buf), "%lu.%lu.%lu.%lu", (ip >> 0) & 0xFF, (ip >> 8) & 0xFF, (ip >> 16) & 0xFF, (ip >> 24) & 0xFF);
+        return std::string(buf);
+    }
+
     //!< Blocks until IP is assigned
     static bool waitForIp(TickType_t maxDelay = portMAX_DELAY) {
         const TickType_t step = pdMS_TO_TICKS(50);
