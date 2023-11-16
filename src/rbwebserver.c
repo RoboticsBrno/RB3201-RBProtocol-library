@@ -115,10 +115,12 @@ static ssize_t rio_read(rio_t* rp, char* usrbuf, size_t n) {
     int cnt;
     while (rp->rio_cnt <= 0) { /* refill if buf is empty */
 
-        rp->rio_cnt = read(rp->rio_fd, rp->rio_buf,
-            sizeof(rp->rio_buf));
+        rp->rio_cnt = recv(rp->rio_fd, rp->rio_buf,
+            sizeof(rp->rio_buf), MSG_DONTWAIT);
         if (rp->rio_cnt < 0) {
-            if (errno != EINTR) /* interrupted by sig handler return */
+            if(errno == EAGAIN) {
+                vTaskDelay(pdMS_TO_TICKS(10));
+            } else if (errno != EINTR) /* interrupted by sig handler return */
                 return -1;
         } else if (rp->rio_cnt == 0) /* EOF */
             return 0;
@@ -252,31 +254,32 @@ nogzip:
 static int is_local_host(const char *hostHeader) {
     const int hostHeaderLen = strlen(hostHeader) - 2; // ignore \r\n
     if(hostHeaderLen < 0) {
-        return 1;
+        return true;
     }
 
     if(hostHeaderLen >= 7 && hostHeaderLen <= 15) {
         int dots = 0;
         bool is_ip = true;
-        for(const char *c = hostHeader; *c; ++c) {
-            if(*c == '.') {
+        for(int i = 0; i < hostHeaderLen; ++i) {
+            char c = hostHeader[i];
+            if(c == '.') {
                 ++dots;
-            } else if(*c < '0' || *c > '9') {
+            } else if(c < '0' || c > '9') {
                 is_ip = false;
                 break;
             }
         }
 
         if(is_ip && dots == 3) {
-            return 1;
+            return true;
         }
     }
 
     const char *localHostname = rb_dn_get_local_hostname();
     if(strlen(localHostname) == hostHeaderLen && memcmp(localHostname, hostHeader, hostHeaderLen) == 0) {
-        return 1;
+        return true;
     }
-    return 0;
+    return false;
 }
 
 static void parse_request(int fd, http_request* req) {
@@ -526,6 +529,7 @@ static void tiny_web_task(void* portPtr) {
 
     while (1) {
         connfd = accept(listenfd, (SA*)&clientaddr, &clientlen);
+
         if (connfd >= 0) {
             if(process(connfd, &clientaddr) <= 0) {
                 close(connfd);

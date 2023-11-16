@@ -1,39 +1,20 @@
 #pragma once
 
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-#include <functional>
-#include <mutex>
-#include <stdarg.h>
-#include <string>
-#include <vector>
-#include <memory>
-
-#include "rbjson.h"
-#include "rbprotocolbase.h"
+#include "rbprotocol.h"
 
 namespace rb {
+namespace internal {
 
-struct WsAddr {
-    int fd;
-};
-
-/**
- * \brief Class that manages the RBProtocol communication
- */
-class ProtocolWs : public ProtocolImplBase<WsAddr> {
+class ProtBackendWs {
 public:
-    typedef ProtocolImplBase<WsAddr>::callback_t callback_t;
+    ProtBackendWs();
+    ~ProtBackendWs();
 
-    /**
-     * The onPacketReceivedCallback is called when a packet arrives.
-     * It runs on a separate task, only single packet is processed at a time.
-     */
-    ProtocolWs(const char* owner, const char* name, const char* description, callback_t callback = nullptr);
-    ~ProtocolWs() {}
+    esp_err_t start(bool register_with_webserver);
 
-    void start();
-    void stop();
+    void send_from_queue(const QueueItem& it);
+
+    std::unique_ptr<rbjson::Object> recv_iter(std::vector<uint8_t>& buf, ProtocolAddr& out_received_addr);
 
     void addClient(int fd);
 
@@ -63,35 +44,19 @@ private:
         int fd;
         uint8_t flags;
         ClientState state;
-        
     };
-
-    static void send_task_trampoline(void* ctrl);
-    void send_task();
-    void resend_mustarrive_locked();
-
-    static void recv_task_trampoline(void* ctrl);
-    void recv_task();
 
     int process_client(Client &client, std::vector<uint8_t>& buf);
     int process_client_header(Client &client, std::vector<uint8_t>& buf);
-    void process_client_fully_received_locked(Client &client);
+    std::unique_ptr<rbjson::Object> process_client_fully_received_locked(Client &client, ProtocolAddr& out_received_addr);
 
     void close_client(int fd);
+    void close_client_locked(int fd);
+    void close_client_locked_gracefully(int fd);
 
-    bool is_addr_empty(const WsAddr& addr) const {
-        return addr.fd == 0;
-    }
-
-    bool is_addr_same(const WsAddr& a, const WsAddr& b) const {
-        return a.fd == b.fd;
-    }
-
-    TaskHandle_t m_task_send;
-    TaskHandle_t m_task_recv;
-
-    std::vector<std::unique_ptr<Client>> m_client_fd;
-    std::mutex m_client_fd_mu;
+    std::vector<std::unique_ptr<Client>> m_clients;
+    std::mutex m_clients_mu;
 };
 
+};
 };

@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.0)
 set(SRCS
     "src/rbdns.cpp"
     "src/rbjson.cpp"
+    "src/rbprotocol.cpp"
     "src/rbprotocoludp.cpp"
     "src/rbprotocolws.cpp"
     "src/rbtcp.cpp"

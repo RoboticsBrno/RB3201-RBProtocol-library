@@ -105,11 +105,18 @@ ssize_t DnsServer::receivePacket(std::vector<uint8_t>& buff, struct sockaddr_in 
     ssize_t msg_size;
 
     while(true) {
-        msg_size = recvfrom(m_socket, (void*)buff.data(), buff.size(), MSG_PEEK, NULL, NULL);
+        msg_size = recvfrom(m_socket, (void*)buff.data(), buff.size(), MSG_PEEK | MSG_DONTWAIT, NULL, NULL);
         if (msg_size < 0) {
             const auto err = errno;
-            if (err == EBADF)
+            if (err == EAGAIN) {
+                vTaskDelay(pdMS_TO_TICKS(30));
+                continue;
+            }
+
+            if (err == EBADF) {
                 return -EBADF;
+            }
+
             ESP_LOGE(TAG, "error in recvfrom: %d %s!", err, strerror(err));
             return -1;
         }
@@ -169,7 +176,7 @@ uint8_t *DnsServer::parseDnsName(uint8_t *src_data, size_t maxlen, std::string& 
 ssize_t DnsServer::processDnsQuestion(std::vector<uint8_t>& buff, ssize_t req_size) {
     dns_header_t *header = (dns_header_t *)buff.data();
 
-    ESP_LOGE(TAG, "DNS query with header id: 0x%X, flags: 0x%X, qd_count: %d",
+    ESP_LOGD(TAG, "DNS query with header id: 0x%X, flags: 0x%X, qd_count: %d",
              ntohs(header->id), ntohs(header->flags), ntohs(header->qd_count));
 
     // Not a standard query
@@ -213,7 +220,7 @@ ssize_t DnsServer::processDnsQuestion(std::vector<uint8_t>& buff, ssize_t req_si
         uint16_t qd_type = ntohs(question->type);
         uint16_t qd_class = ntohs(question->clazz);
 
-        ESP_LOGE(TAG, "Received type: %d | Class: %d | Question for: %s", qd_type, qd_class, hostname.c_str());
+        ESP_LOGD(TAG, "Received type: %d | Class: %d | Question for: %s", qd_type, qd_class, hostname.c_str());
 
         if (qd_type != QD_TYPE_A) {
             cur_question_ptr = name_end_ptr + sizeof(dns_question_t);
@@ -227,7 +234,7 @@ ssize_t DnsServer::processDnsQuestion(std::vector<uint8_t>& buff, ssize_t req_si
         answer->clazz = htons(qd_class);
         answer->ttl = htonl(ANS_TTL_SEC);
 
-        ESP_LOGE(TAG, "Answer with PTR offset: 0x%" PRIX16 " and IP 0x%" PRIX32, ntohs(answer->ptr_offset), cur_esp_ip);
+        ESP_LOGD(TAG, "Answer with PTR offset: 0x%" PRIX16 " and IP 0x%" PRIX32, ntohs(answer->ptr_offset), cur_esp_ip);
 
         /*
         TODO: add support for custom DNS entries, now it always returns ESP's IP.
