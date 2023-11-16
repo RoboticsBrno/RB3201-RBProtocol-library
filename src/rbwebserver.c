@@ -338,7 +338,7 @@ static void parse_request(int fd, http_request* req) {
 
         int length = strlen(filename);
         if (length == 0) {
-            filename = ".";
+            filename = (char*)".";
         } else {
             for (int i = 0; i < length; ++i) {
                 if (filename[i] == '?') {
@@ -450,8 +450,7 @@ static void process_serve_file(int fd, struct sockaddr_in* clientaddr, http_requ
     int ffd = prepare_gzip(req);
     if (ffd <= 0) {
         status = 404;
-        char* msg = "File not found";
-        client_error(fd, status, "Not found", msg);
+        client_error(fd, status, "Not found", "File not found");
     } else {
         fstat(ffd, &sbuf);
         if (S_ISREG(sbuf.st_mode)) {
@@ -464,8 +463,7 @@ static void process_serve_file(int fd, struct sockaddr_in* clientaddr, http_requ
             serve_static(fd, ffd, req, sbuf.st_size);
         } else {
             status = 400;
-            char* msg = "Unknow Error";
-            client_error(fd, status, "Error", msg);
+            client_error(fd, status, "Error", "Unknow Error");
         }
         close(ffd);
     }

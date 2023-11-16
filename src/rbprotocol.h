@@ -10,6 +10,7 @@
 #include <freertos/queue.h>
 #include <functional>
 #include <string>
+#include <mutex>
 
 
 #include "rbjson.h"
@@ -64,12 +65,7 @@ class Protocol {
 public:
     typedef std::function<void(const std::string& cmd, rbjson::Object* pkt)> callback_t;
 
-    static constexpr const ProtocolConfig DEFAULT_CONFIG = {
-        .enable_udp = true,
-        .enable_ws = true,
-        .ws_register_with_webserver = true,
-        .udp_port = 42424,
-    };
+    static const ProtocolConfig DEFAULT_CONFIG;
 
     Protocol(const char* owner, const char* name, const char* description, callback_t callback = nullptr);
     ~Protocol();

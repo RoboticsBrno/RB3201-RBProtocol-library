@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <string>
 
 #if defined(ESP_IDF_VERSION_VAL)
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 1, 0)
