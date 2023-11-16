@@ -8,5 +8,5 @@
 
 // Backwards compatibility
 namespace rb {
-typedef ProtocolUdp Protocol;
+using Protocol = ProtocolUdp;
 };

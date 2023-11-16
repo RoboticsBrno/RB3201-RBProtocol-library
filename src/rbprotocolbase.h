@@ -25,9 +25,33 @@ public:
     virtual bool is_possessed() const = 0; //!< Returns true of the device is possessed (somebody connected to it)
     virtual bool is_mustarrive_complete(uint32_t id) const = 0;
 
-    virtual void send_log(const char* fmt, ...) = 0; //!< Send a message to the android app
-    virtual void send_log(const char* fmt, va_list args) = 0; //!< Send a message to the android app
-    virtual void send_log(const std::string& str) = 0; //!< Send a message to the android app
+    void send_log(const char* fmt, ...) {
+        va_list args;
+        va_start(args, fmt);
+        send_log(fmt, args);
+        va_end(args);
+    }
+
+    void send_log(const char* fmt, va_list args) {
+        char static_buf[256];
+        std::unique_ptr<char[]> dyn_buf;
+        char* used_buf = static_buf;
+
+        int fmt_len = vsnprintf(static_buf, sizeof(static_buf), fmt, args);
+        if (fmt_len >= sizeof(static_buf)) {
+            dyn_buf.reset(new char[fmt_len + 1]);
+            used_buf = dyn_buf.get();
+            vsnprintf(dyn_buf.get(), fmt_len + 1, fmt, args);
+        }
+
+        send_log(std::string(used_buf));
+    }
+
+    void send_log(const std::string& str) {
+        rbjson::Object* pkt = new rbjson::Object();
+        pkt->set("msg", str);
+        send_mustarrive("log", pkt);
+    }
 };
 
 template<typename AddrT>
@@ -47,10 +71,6 @@ public:
 
     bool is_possessed() const; //!< Returns true of the device is possessed (somebody connected to it)
     bool is_mustarrive_complete(uint32_t id) const;
-
-    void send_log(const char* fmt, ...); //!< Send a message to the android app
-    void send_log(const char* fmt, va_list args); //!< Send a message to the android app
-    void send_log(const std::string& str); //!< Send a message to the android app
 
     TaskHandle_t getTaskSend() const { return m_task_send; }
     TaskHandle_t getTaskRecv() const { return m_task_recv; }
@@ -132,37 +152,6 @@ void ProtocolImplBase<AddrT>::stop() {
 
     m_task_send = nullptr;
     m_task_recv = nullptr;
-}
-
-template<typename AddrT>
-void ProtocolImplBase<AddrT>::send_log(const char* fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    send_log(fmt, args);
-    va_end(args);
-}
-
-template<typename AddrT>
-void ProtocolImplBase<AddrT>::send_log(const char* fmt, va_list args) {
-    char static_buf[256];
-    std::unique_ptr<char[]> dyn_buf;
-    char* used_buf = static_buf;
-
-    int fmt_len = vsnprintf(static_buf, sizeof(static_buf), fmt, args);
-    if (fmt_len >= sizeof(static_buf)) {
-        dyn_buf.reset(new char[fmt_len + 1]);
-        used_buf = dyn_buf.get();
-        vsnprintf(dyn_buf.get(), fmt_len + 1, fmt, args);
-    }
-
-    send_log(std::string(used_buf));
-}
-
-template<typename AddrT>
-void ProtocolImplBase<AddrT>::send_log(const std::string& str) {
-    rbjson::Object* pkt = new rbjson::Object();
-    pkt->set("msg", str);
-    send_mustarrive("log", pkt);
 }
 
 
@@ -256,7 +245,6 @@ uint32_t ProtocolImplBase<AddrT>::send_mustarrive(const char* cmd, rbjson::Objec
     AddrT addr;
     if (!get_possessed_addr(addr)) {
         ESP_LOGW(RBPROT_TAG, "can't send, the device was not possessed yet.");
-        delete params;
         return UINT32_MAX;
     }
 
@@ -317,10 +305,8 @@ void ProtocolImplBase<AddrT>::handle_msg(const AddrT& addr, rbjson::Object* pkt)
     }
 
     if (is_addr_empty(m_possessed_addr) || isPossessCmd) {
-        printf("Posses 1\n");
         m_mutex.lock();
         if (!is_addr_same(m_possessed_addr, addr)) {
-            printf("Posses 2\n");
             m_possessed_addr = addr;
         }
         m_mustarrive_e = 0;

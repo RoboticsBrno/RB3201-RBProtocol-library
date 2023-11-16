@@ -108,6 +108,10 @@ void WiFi::startAp(const char* ssid, const char* pass, uint8_t channel) {
     ESP_ERROR_CHECK(esp_wifi_start());
 
     esp_wifi_set_bandwidth(WIFI_IF_AP, WIFI_BW_HT20);
+
+    esp_netif_ip_info_t ip_info;
+    ESP_ERROR_CHECK(esp_netif_get_ip_info(gNetIf, &ip_info));
+    m_ip.store(ip_info.ip.addr);
 }
 
 void WiFi::eventHandler_netif(void* arg, esp_event_base_t event_base,
