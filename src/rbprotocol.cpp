@@ -15,6 +15,13 @@ namespace rb {
 
 using namespace rb::internal;
 
+const ProtocolConfig Protocol::DEFAULT_CONFIG = {
+    .enable_udp = true,
+    .enable_ws = true,
+    .ws_register_with_webserver = true,
+    .udp_port = 42424,
+};
+
 Protocol::Protocol(const char* owner, const char* name, const char* description, Protocol::callback_t callback) {
     m_owner = owner;
     m_name = name;
