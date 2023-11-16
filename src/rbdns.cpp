@@ -1,7 +1,7 @@
-#include <esp_log.h>
 #include "lwip/err.h"
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
+#include <esp_log.h>
 
 #include "rbwifi.h"
 
@@ -16,8 +16,7 @@
 
 static const ssize_t DNS_MSG_SIZE_LIMIT = 256;
 
-typedef struct __attribute__((__packed__))
-{
+typedef struct __attribute__((__packed__)) {
     uint16_t id;
     uint16_t flags;
     uint16_t qd_count;
@@ -31,8 +30,7 @@ typedef struct __attribute__((__packed__)) {
     uint16_t clazz;
 } dns_question_t;
 
-typedef struct __attribute__((__packed__))
-{
+typedef struct __attribute__((__packed__)) {
     uint16_t ptr_offset;
     uint16_t type;
     uint16_t clazz;
@@ -43,24 +41,22 @@ typedef struct __attribute__((__packed__))
 
 namespace rb {
 
-
 DnsServer& DnsServer::get() {
     static DnsServer instance;
     return instance;
 }
 
-DnsServer::DnsServer() : m_socket(-1), m_task(nullptr) {
-    
+DnsServer::DnsServer()
+    : m_socket(-1)
+    , m_task(nullptr) {
 }
 
 DnsServer::~DnsServer() {
-
 }
 
-
-void DnsServer::start(const char *local_hostname) {
+void DnsServer::start(const char* local_hostname) {
     const std::lock_guard<std::mutex> l(m_mutex);
-    if(m_task != nullptr) {
+    if (m_task != nullptr) {
         ESP_LOGE(TAG, "DnsServer::start called when it was already started, doing nothing.");
         return;
     }
@@ -91,7 +87,7 @@ void DnsServer::start(const char *local_hostname) {
 
 void DnsServer::stop() {
     const std::lock_guard<std::mutex> l(m_mutex);
-    if(m_task == nullptr) {
+    if (m_task == nullptr) {
         ESP_LOGE(TAG, "DnsServer::stop called when it was not started, doing nothing.");
         return;
     }
@@ -101,10 +97,10 @@ void DnsServer::stop() {
     m_task = NULL;
 }
 
-ssize_t DnsServer::receivePacket(std::vector<uint8_t>& buff, struct sockaddr_in *addr) {
+ssize_t DnsServer::receivePacket(std::vector<uint8_t>& buff, struct sockaddr_in* addr) {
     ssize_t msg_size;
 
-    while(true) {
+    while (true) {
         msg_size = recvfrom(m_socket, (void*)buff.data(), buff.size(), MSG_PEEK | MSG_DONTWAIT, NULL, NULL);
         if (msg_size < 0) {
             const auto err = errno;
@@ -131,12 +127,12 @@ ssize_t DnsServer::receivePacket(std::vector<uint8_t>& buff, struct sockaddr_in 
     if (pop_res < 0) {
         const auto err = errno;
         if (err == EBADF)
-           return -EBADF;
+            return -EBADF;
         ESP_LOGE(TAG, "error in recvfrom: %d %s!", err, strerror(err));
         return -1;
     }
-    
-    if(msg_size > DNS_MSG_SIZE_LIMIT) {
+
+    if (msg_size > DNS_MSG_SIZE_LIMIT) {
         ESP_LOGW(TAG, "Oversize DNS packet received: %d", msg_size);
         return -1;
     }
@@ -144,29 +140,29 @@ ssize_t DnsServer::receivePacket(std::vector<uint8_t>& buff, struct sockaddr_in 
     return msg_size;
 }
 
-uint8_t *DnsServer::parseDnsName(uint8_t *src_data, size_t maxlen, std::string& out_name) {
+uint8_t* DnsServer::parseDnsName(uint8_t* src_data, size_t maxlen, std::string& out_name) {
     char out_buf[64];
-    char *out_buf_ptr = out_buf;
+    char* out_buf_ptr = out_buf;
 
-    if(maxlen > sizeof(out_buf)) {
+    if (maxlen > sizeof(out_buf)) {
         maxlen = sizeof(out_buf);
     }
 
-    uint8_t *label = src_data;
+    uint8_t* label = src_data;
     do {
         const uint8_t label_len = *label;
-        if(label_len > maxlen || label_len == 0) {
+        if (label_len > maxlen || label_len == 0) {
             ESP_LOGE(TAG, "too long label encountered, %d", label_len);
             return NULL;
         }
 
-        memcpy(out_buf_ptr, label+1, label_len);
+        memcpy(out_buf_ptr, label + 1, label_len);
 
         out_buf_ptr[label_len] = '.';
         out_buf_ptr += label_len + 1;
         maxlen -= label_len + 1;
         label += label_len + 1;
-    } while(*label != 0);
+    } while (*label != 0);
 
     out_name.assign(out_buf, out_buf_ptr - out_buf - 1);
 
@@ -174,10 +170,10 @@ uint8_t *DnsServer::parseDnsName(uint8_t *src_data, size_t maxlen, std::string& 
 }
 
 ssize_t DnsServer::processDnsQuestion(std::vector<uint8_t>& buff, ssize_t req_size) {
-    dns_header_t *header = (dns_header_t *)buff.data();
+    dns_header_t* header = (dns_header_t*)buff.data();
 
     ESP_LOGD(TAG, "DNS query with header id: 0x%X, flags: 0x%X, qd_count: %d",
-             ntohs(header->id), ntohs(header->flags), ntohs(header->qd_count));
+        ntohs(header->id), ntohs(header->flags), ntohs(header->qd_count));
 
     // Not a standard query
     if ((ntohs(header->flags) & OPCODE_MASK) != 0) {
@@ -198,25 +194,25 @@ ssize_t DnsServer::processDnsQuestion(std::vector<uint8_t>& buff, ssize_t req_si
         return -1;
     }
 
-    if(buff.size() < full_reply_len) {
+    if (buff.size() < full_reply_len) {
         buff.resize(full_reply_len);
-        header = (dns_header_t *)buff.data();
+        header = (dns_header_t*)buff.data();
     }
 
-    uint8_t *req_end = buff.data() + req_size;
-    uint8_t *cur_question_ptr = buff.data() + sizeof(dns_header_t);
-    uint8_t *cur_ans_ptr = req_end;
+    uint8_t* req_end = buff.data() + req_size;
+    uint8_t* cur_question_ptr = buff.data() + sizeof(dns_header_t);
+    uint8_t* cur_ans_ptr = req_end;
 
     const auto cur_esp_ip = WiFi::getIp();
 
     std::string hostname;
-    for(uint16_t question_idx = 0; question_idx < question_count; ++question_idx) {
-        uint8_t *name_end_ptr = parseDnsName(cur_question_ptr, req_end - cur_question_ptr, hostname);
-        if(!name_end_ptr) {
+    for (uint16_t question_idx = 0; question_idx < question_count; ++question_idx) {
+        uint8_t* name_end_ptr = parseDnsName(cur_question_ptr, req_end - cur_question_ptr, hostname);
+        if (!name_end_ptr) {
             return -1;
         }
 
-        dns_question_t *question = (dns_question_t *)(name_end_ptr);
+        dns_question_t* question = (dns_question_t*)(name_end_ptr);
         uint16_t qd_type = ntohs(question->type);
         uint16_t qd_class = ntohs(question->clazz);
 
@@ -227,7 +223,7 @@ ssize_t DnsServer::processDnsQuestion(std::vector<uint8_t>& buff, ssize_t req_si
             continue;
         }
 
-        dns_answer_t *answer = (dns_answer_t *)cur_ans_ptr;
+        dns_answer_t* answer = (dns_answer_t*)cur_ans_ptr;
 
         answer->ptr_offset = htons(0xC000 | (cur_question_ptr - buff.data()));
         answer->type = htons(qd_type);
@@ -253,7 +249,7 @@ ssize_t DnsServer::processDnsQuestion(std::vector<uint8_t>& buff, ssize_t req_si
     header->an_count = htons(answer_count);
 
     // Drop any extra RRs, namespace...
-    if(cur_question_ptr < req_end) {
+    if (cur_question_ptr < req_end) {
         const size_t extra_req_data_len = req_end - cur_question_ptr;
         memmove(cur_question_ptr, req_end, extra_req_data_len);
         req_size -= extra_req_data_len;
@@ -274,11 +270,11 @@ void DnsServer::taskBody(void*) {
     std::vector<uint8_t> buff;
     buff.resize(64);
 
-    while(true) {
+    while (true) {
         msg_size = self.receivePacket(buff, &addr);
-        if(msg_size == -EBADF) {
+        if (msg_size == -EBADF) {
             break;
-        } else if(msg_size < 0) {
+        } else if (msg_size < 0) {
             continue;
         }
 
@@ -286,11 +282,11 @@ void DnsServer::taskBody(void*) {
         memset(buff.data() + msg_size, 0, buff.size() - msg_size);
 
         ssize_t reply_size = self.processDnsQuestion(buff, msg_size);
-        if(reply_size < 0) {
+        if (reply_size < 0) {
             continue;
         }
 
-        if(sendto(self.m_socket, buff.data(), reply_size, 0, (struct sockaddr*)&addr, addr_len) < 0) {
+        if (sendto(self.m_socket, buff.data(), reply_size, 0, (struct sockaddr*)&addr, addr_len) < 0) {
             const auto err = errno;
             if (err == EBADF)
                 break;
@@ -301,9 +297,8 @@ void DnsServer::taskBody(void*) {
     vTaskDelete(nullptr);
 }
 
-
 };
 
-extern "C" const char *rb_dn_get_local_hostname() {
+extern "C" const char* rb_dn_get_local_hostname() {
     return rb::DnsServer::get().getLocalHostname().c_str();
 }

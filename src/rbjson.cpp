@@ -23,7 +23,6 @@ static int count_tok_size(jsmntok_t* tok) {
     return itr - tok;
 }
 
-
 static inline void write_string_escaped(const char* str, std::ostream& ss) {
     const char* start = str;
     const char* end = NULL;
@@ -37,17 +36,29 @@ static inline void write_string_escaped(const char* str, std::ostream& ss) {
         } else {
             ss.write(start, end - start);
             ss.put('\\');
-            switch(*end) {
-                case '"':
-                case '\\':
-                    ss.put(*end);
-                    break;
-                case '\b': ss.put('b'); break;
-                case '\f': ss.put('f'); break;
-                case '\n': ss.put('n'); break;
-                case '\r': ss.put('r'); break;
-                case '\t': ss.put('t'); break;
-                default: ss.put('?'); break;
+            switch (*end) {
+            case '"':
+            case '\\':
+                ss.put(*end);
+                break;
+            case '\b':
+                ss.put('b');
+                break;
+            case '\f':
+                ss.put('f');
+                break;
+            case '\n':
+                ss.put('n');
+                break;
+            case '\r':
+                ss.put('r');
+                break;
+            case '\t':
+                ss.put('t');
+                break;
+            default:
+                ss.put('?');
+                break;
             }
             start = end + 1;
         }

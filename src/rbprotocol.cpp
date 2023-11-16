@@ -56,7 +56,7 @@ esp_err_t Protocol::start(const ProtocolConfig& cfg) {
         return ESP_ERR_INVALID_STATE;
     }
 
-    if(!cfg.enable_udp && !cfg.enable_ws) {
+    if (!cfg.enable_udp && !cfg.enable_ws) {
         ESP_LOGE(RBPROT_TAG, "One of enable_udp, enable_ws must be true!");
         return ESP_ERR_INVALID_ARG;
     }
@@ -65,18 +65,18 @@ esp_err_t Protocol::start(const ProtocolConfig& cfg) {
     std::unique_ptr<ProtBackendWs> ws;
     esp_err_t err;
 
-    if(cfg.enable_udp) {
+    if (cfg.enable_udp) {
         udp.reset(new ProtBackendUdp());
         err = udp->start(cfg.udp_port);
-        if(err != ESP_OK) {
+        if (err != ESP_OK) {
             return err;
         }
     }
 
-    if(cfg.enable_ws) {
+    if (cfg.enable_ws) {
         ws.reset(new ProtBackendWs());
         err = ws->start(cfg.ws_register_with_webserver);
-        if(err != ESP_OK) {
+        if (err != ESP_OK) {
             return err;
         }
     }
@@ -95,7 +95,7 @@ void Protocol::stop() {
         return;
     }
 
-    QueueItem it = { };
+    QueueItem it = {};
     xQueueSendToFront(m_sendQueue, &it, portMAX_DELAY);
     xTaskNotify(m_task_recv, 0, eNoAction);
 
@@ -349,7 +349,7 @@ void Protocol::resend_mustarrive_locked() {
         // Websocket protocol does not resend
         if (possesed_addr.kind == ProtBackendType::PROT_UDP) {
             m_mutex.lock();
-            if(m_udp) {
+            if (m_udp) {
                 itr->pkt->set("n", m_write_counter++);
                 m_udp->resend_mustarrive(possesed_addr, itr->pkt);
             }
@@ -365,7 +365,7 @@ void Protocol::resend_mustarrive_locked() {
     }
 }
 
-void Protocol::send_task(void *selfVoid) {
+void Protocol::send_task(void* selfVoid) {
     auto& self = *((Protocol*)selfVoid);
 
     TickType_t mustarrive_next;
@@ -375,24 +375,24 @@ void Protocol::send_task(void *selfVoid) {
 
     while (true) {
         for (uint8_t i = 0; i < 16 && xQueueReceive(self.m_sendQueue, &it, MS_TO_TICKS(10)) == pdTRUE; ++i) {
-            if(it.addr.kind == ProtBackendType::PROT_NONE) {
+            if (it.addr.kind == ProtBackendType::PROT_NONE) {
                 goto exit;
             }
 
             self.m_mutex.lock();
-            switch(it.addr.kind) {
-                case ProtBackendType::PROT_UDP:
-                    if(self.m_udp) {
-                        self.m_udp->send_from_queue(it);
-                    }
-                    break;
-                case ProtBackendType::PROT_WS:
-                    if(self.m_ws) {
-                        self.m_ws->send_from_queue(it);
-                    }
-                    break;
-                case ProtBackendType::PROT_NONE:
-                    break;
+            switch (it.addr.kind) {
+            case ProtBackendType::PROT_UDP:
+                if (self.m_udp) {
+                    self.m_udp->send_from_queue(it);
+                }
+                break;
+            case ProtBackendType::PROT_WS:
+                if (self.m_ws) {
+                    self.m_ws->send_from_queue(it);
+                }
+                break;
+            case ProtBackendType::PROT_NONE:
+                break;
             }
             self.m_mutex.unlock();
 
@@ -413,20 +413,20 @@ exit:
     vTaskDelete(nullptr);
 }
 
-void Protocol::recv_task(void *selfVoid) {
+void Protocol::recv_task(void* selfVoid) {
     auto& self = *((Protocol*)selfVoid);
 
     ProtocolAddr recv_addr;
     std::vector<uint8_t> buf;
     buf.resize(64);
 
-    while(xTaskNotifyWait(0, 0, NULL, 0) == pdFALSE) {
+    while (xTaskNotifyWait(0, 0, NULL, 0) == pdFALSE) {
         bool received_msg = false;
 
         self.m_mutex.lock();
-        if(self.m_udp) {
+        if (self.m_udp) {
             auto pkt = self.m_udp->recv_iter(buf, recv_addr);
-            if(pkt) {
+            if (pkt) {
                 self.m_mutex.unlock();
                 self.handle_msg(recv_addr, pkt.get());
                 pkt.reset();
@@ -435,9 +435,9 @@ void Protocol::recv_task(void *selfVoid) {
             }
         }
 
-        if(self.m_ws) {
+        if (self.m_ws) {
             auto pkt = self.m_ws->recv_iter(buf, recv_addr);
-            if(pkt) {
+            if (pkt) {
                 self.m_mutex.unlock();
                 self.handle_msg(recv_addr, pkt.get());
                 pkt.reset();
@@ -449,7 +449,7 @@ void Protocol::recv_task(void *selfVoid) {
             self.m_mutex.unlock();
         }
 
-        if(!received_msg) {
+        if (!received_msg) {
             vTaskDelay(MS_TO_TICKS(10));
         }
     }

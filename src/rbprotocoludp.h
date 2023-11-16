@@ -5,7 +5,6 @@
 namespace rb {
 namespace internal {
 
-
 class ProtBackendUdp {
 public:
     ProtBackendUdp();
