@@ -18,6 +18,7 @@
 
 #include "rbwebserver.h"
 #include "rbwebserver_internal.h"
+#include "rbdns.h"
 
 #define TAG "RbWebServer"
 
@@ -83,10 +84,10 @@ static void rio_readinitb(rio_t* rp, int fd) {
     rp->rio_bufptr = rp->rio_buf;
 }
 
-ssize_t writen(int fd, void* usrbuf, size_t n) {
+ssize_t writen(int fd, const void* usrbuf, size_t n) {
     size_t nleft = n;
     ssize_t nwritten;
-    char* bufp = usrbuf;
+    const char* bufp = usrbuf;
 
     while (nleft > 0) {
         if ((nwritten = write(fd, bufp, nleft)) <= 0) {
@@ -248,6 +249,36 @@ nogzip:
     return open(req->filename, O_RDONLY);
 }
 
+static int is_local_host(const char *hostHeader) {
+    const int hostHeaderLen = strlen(hostHeader) - 2; // ignore \r\n
+    if(hostHeaderLen < 0) {
+        return 1;
+    }
+
+    if(hostHeaderLen >= 7 && hostHeaderLen <= 15) {
+        int dots = 0;
+        bool is_ip = true;
+        for(const char *c = hostHeader; *c; ++c) {
+            if(*c == '.') {
+                ++dots;
+            } else if(*c < '0' || *c > '9') {
+                is_ip = false;
+                break;
+            }
+        }
+
+        if(is_ip && dots == 3) {
+            return 1;
+        }
+    }
+
+    const char *localHostname = rb_dn_get_local_hostname();
+    if(strlen(localHostname) == hostHeaderLen && memcmp(localHostname, hostHeader, hostHeaderLen) == 0) {
+        return 1;
+    }
+    return 0;
+}
+
 static void parse_request(int fd, http_request* req) {
     rio_t rio;
     char buf[MAXLINE], method[10], uri[MAXLINE];
@@ -257,6 +288,7 @@ static void parse_request(int fd, http_request* req) {
     req->offset = 0;
     req->end = 0; /* default */
     req->servingGzip = 0;
+    req->non_local_hostname = 0;
 
     rio_readinitb(&rio, fd);
     rio_readlineb(&rio, buf, MAXLINE);
@@ -283,6 +315,8 @@ static void parse_request(int fd, http_request* req) {
             memcpy(req->ws_key, buf + 19, 24);
         } else if(strstr(buf, "Sec-WebSocket-Version: ") == buf) {
             sscanf(buf + 23, "%ld", &req->ws_version);
+        } else if(strncmp(buf, "Host: ", 6) == 0) {
+            req->non_local_hostname = !is_local_host(buf+6);
         }
     }
 
@@ -326,6 +360,16 @@ void client_error(int fd, int status, const char* msg, const char* longmsg) {
         "Content-length: %u\r\n\r\n", strlen(longmsg));
     sprintf(buf + strlen(buf), "%s", longmsg);
     writen(fd, buf, strlen(buf));
+}
+
+#define REDIRECT_RESPONSE \
+    "HTTP/1.1 302 Temporary Redirect\r\n"\
+    "Location: http://"
+
+static void temporary_redirect(int fd, const char *location) {
+    writen(fd, REDIRECT_RESPONSE, sizeof(REDIRECT_RESPONSE)-1);
+    writen(fd, location, strlen(location));
+    writen(fd, "\r\n\r\n", 4);
 }
 
 
@@ -431,7 +475,10 @@ static int process(int fd, struct sockaddr_in* clientaddr) {
 
     parse_request(fd, &req);
 
-    if(req.ws_version != 0) {
+    if(req.non_local_hostname) {
+        temporary_redirect(fd, rb_dn_get_local_hostname());
+        return 0;
+    } else if(req.ws_version != 0) {
         if(ws_protocol == NULL) {
             client_error(fd, 400, "WS not enabled", "");
             return 0;

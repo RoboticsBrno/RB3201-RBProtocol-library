@@ -21,13 +21,15 @@ typedef struct {
 
     uint8_t ws_key[24];
     int32_t ws_version;
+
+    uint8_t non_local_hostname;
 } http_request;
 
 
 void log_access(int status, struct sockaddr_in* c_addr, http_request* req);
 void client_error(int fd, int status, const char* msg, const char* longmsg);
 
-ssize_t writen(int fd, void* usrbuf, size_t n);
+ssize_t writen(int fd, const void* usrbuf, size_t n);
 
 int rb_web_handle_websocket_switch_request(int fd, http_request *req);
 
