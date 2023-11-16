@@ -46,9 +46,9 @@ private:
         ClientState state;
     };
 
-    int process_client(Client &client, std::vector<uint8_t>& buf);
-    int process_client_header(Client &client, std::vector<uint8_t>& buf);
-    std::unique_ptr<rbjson::Object> process_client_fully_received_locked(Client &client, ProtocolAddr& out_received_addr);
+    int process_client(Client& client, std::vector<uint8_t>& buf);
+    int process_client_header(Client& client, std::vector<uint8_t>& buf);
+    std::unique_ptr<rbjson::Object> process_client_fully_received_locked(Client& client, ProtocolAddr& out_received_addr);
 
     void close_client(int fd);
     void close_client_locked(int fd);

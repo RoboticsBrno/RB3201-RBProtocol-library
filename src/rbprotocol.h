@@ -1,17 +1,16 @@
 #pragma once
 
 #include <esp_err.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/queue.h>
+#include <freertos/task.h>
+#include <functional>
 #include <lwip/arch.h>
 #include <lwip/sockets.h>
-#include <vector>
 #include <memory>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-#include <freertos/queue.h>
-#include <functional>
-#include <string>
 #include <mutex>
-
+#include <string>
+#include <vector>
 
 #include "rbjson.h"
 
@@ -21,37 +20,37 @@
 namespace rb {
 
 namespace internal {
-    enum ProtBackendType : uint8_t {
-        PROT_NONE = 0,
-        PROT_UDP = 1,
-        PROT_WS = 2,
-    };
+enum ProtBackendType : uint8_t {
+    PROT_NONE = 0,
+    PROT_UDP = 1,
+    PROT_WS = 2,
+};
 
-    struct ProtocolAddrUdp {
-        struct in_addr ip;
-        uint16_t port;
-    };
+struct ProtocolAddrUdp {
+    struct in_addr ip;
+    uint16_t port;
+};
 
-    struct ProtocolAddrWs {
-        int fd;
-    };
+struct ProtocolAddrWs {
+    int fd;
+};
 
-    struct ProtocolAddr {
-        union {
-            ProtocolAddrUdp udp;
-            ProtocolAddrWs ws;
-        };
-        ProtBackendType kind;
+struct ProtocolAddr {
+    union {
+        ProtocolAddrUdp udp;
+        ProtocolAddrWs ws;
     };
+    ProtBackendType kind;
+};
 
-    struct QueueItem {
-        ProtocolAddr addr;
-        char* buf;
-        uint16_t size;
-    };
+struct QueueItem {
+    ProtocolAddr addr;
+    char* buf;
+    uint16_t size;
+};
 
-    class ProtBackendUdp;
-    class ProtBackendWs;
+class ProtBackendUdp;
+class ProtBackendWs;
 };
 
 struct ProtocolConfig {
@@ -95,8 +94,8 @@ private:
         int16_t attempts;
     };
 
-    static void send_task(void *selfVoid);
-    static void recv_task(void *selfVoid);
+    static void send_task(void* selfVoid);
+    static void recv_task(void* selfVoid);
 
     void handle_msg(const internal::ProtocolAddr& addr, rbjson::Object* pkt);
     void resend_mustarrive_locked();
@@ -120,8 +119,8 @@ private:
     int32_t m_write_counter;
     internal::ProtocolAddr m_possessed_addr;
     QueueHandle_t m_sendQueue;
-    internal::ProtBackendUdp *m_udp;
-    internal::ProtBackendWs *m_ws;
+    internal::ProtBackendUdp* m_udp;
+    internal::ProtBackendWs* m_ws;
     mutable std::mutex m_mutex;
 
     uint32_t m_mustarrive_e;

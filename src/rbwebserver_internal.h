@@ -7,7 +7,6 @@
 extern "C" {
 #endif
 
-
 #define LISTENQ 8 /* second argument to listen() */
 #define MAXLINE 256 /* max length of a line */
 #define RIO_BUFSIZE 256
@@ -25,17 +24,16 @@ typedef struct {
     uint8_t non_local_hostname;
 } http_request;
 
-
 void log_access(int status, struct sockaddr_in* c_addr, http_request* req);
 void client_error(int fd, int status, const char* msg, const char* longmsg);
 
 ssize_t writen(int fd, const void* usrbuf, size_t n);
 
-int rb_web_handle_websocket_switch_request(int fd, http_request *req);
+int rb_web_handle_websocket_switch_request(int fd, http_request* req);
 
-void rb_web_set_wsprotocol(void *wsProtocolInstance);
-void rb_web_clear_wsprotocol(void *wsProtocolInstance);
-void rb_web_ws_new_connection(void *wsProtocolInstance, int fd);
+void rb_web_set_wsprotocol(void* wsProtocolInstance);
+void rb_web_clear_wsprotocol(void* wsProtocolInstance);
+void rb_web_ws_new_connection(void* wsProtocolInstance, int fd);
 
 #ifdef __cplusplus
 };

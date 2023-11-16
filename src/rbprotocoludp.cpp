@@ -91,7 +91,7 @@ std::unique_ptr<rbjson::Object> ProtBackendUdp::recv_iter(std::vector<uint8_t>& 
         received_len = recvfrom(m_socket, buf.data(), buf.size(), MSG_PEEK | MSG_DONTWAIT, NULL, NULL);
         if (received_len < 0) {
             const auto err = errno;
-            if(err != EAGAIN) { // with MSG_DONTWAIT, it means no message available
+            if (err != EAGAIN) { // with MSG_DONTWAIT, it means no message available
                 ESP_LOGE(RBPROT_TAG, "error in recvfrom: %d %s!", err, strerror(err));
             }
             return nullptr;
@@ -117,7 +117,7 @@ std::unique_ptr<rbjson::Object> ProtBackendUdp::recv_iter(std::vector<uint8_t>& 
         ESP_LOGE(RBPROT_TAG, "failed to parse the packet's json");
         return nullptr;
     }
-    
+
     out_received_addr.kind = ProtBackendType::PROT_UDP;
     out_received_addr.udp.port = addr.sin_port;
     out_received_addr.udp.ip = addr.sin_addr;
