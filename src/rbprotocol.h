@@ -11,6 +11,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <stdarg.h>
 
 #include "rbjson.h"
 

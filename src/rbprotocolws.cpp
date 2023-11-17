@@ -1,4 +1,5 @@
 #include <esp_log.h>
+#include <cstring>
 
 #include "rbprotocolws.h"
 #include "rbwebserver_internal.h"

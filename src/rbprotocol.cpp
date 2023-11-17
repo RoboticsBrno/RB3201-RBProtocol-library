@@ -1,4 +1,5 @@
 #include <esp_log.h>
+#include <cstring>
 
 #include "rbprotocol.h"
 #include "rbprotocoludp.h"
