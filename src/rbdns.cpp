@@ -2,6 +2,7 @@
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
 #include <esp_log.h>
+#include <cstring>
 
 #include "rbwifi.h"
 
