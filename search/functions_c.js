@@ -1,8 +1,6 @@
 var searchData=
 [
-  ['rb_5fweb_5fadd_5ffile_0',['rb_web_add_file',['../rbwebserver_8h.html#ae4358510ea1be5ecac08f5b4f0f5d081',1,'rbwebserver.h']]],
-  ['rb_5fweb_5fset_5fextra_5fcallback_1',['rb_web_set_extra_callback',['../rbwebserver_8h.html#a40594b2ef942441de26a0dfcb2f4919e',1,'rbwebserver.h']]],
-  ['rb_5fweb_5fstart_2',['rb_web_start',['../rbwebserver_8h.html#aef42fd193c622075b8aa02218a974a91',1,'rbwebserver.h']]],
-  ['remove_3',['remove',['../classrbjson_1_1Object.html#aab0785202f5609b50a2c517f4be6e1a8',1,'rbjson::Object::remove()'],['../classrbjson_1_1Array.html#ae5d5e07d40e3968b6cd727cd93d5e4fa',1,'rbjson::Array::remove()']]],
-  ['removecallback_4',['removeCallback',['../classrb_1_1TcpSocket.html#a17f2b156f7b89f8542994d15ba8211b5',1,'rb::TcpSocket::removeCallback()'],['../classrb_1_1Udp.html#ad82a2b3d0c9188fdb50cd97b6220d8c4',1,'rb::Udp::removeCallback()']]]
+  ['object_0',['Object',['../classrbjson_1_1Object.html#a075332195df15be42dd8d40da9a339e8',1,'rbjson::Object']]],
+  ['onreceive_1',['onReceive',['../classrb_1_1TcpSocket.html#ac781c66b982c8b623cae3f9bbf133c04',1,'rb::TcpSocket::onReceive(std::function&lt; void(const std::vector&lt; uint8_t &gt; &amp;data)&gt; callback)'],['../classrb_1_1TcpSocket.html#a513c06de09e90b2805ba46e1a7ffa174',1,'rb::TcpSocket::onReceive(std::function&lt; void(const std::string &amp;text)&gt; callback)'],['../classrb_1_1Udp.html#a39cad79f6076835d635cdaaf891ece7e',1,'rb::Udp::onReceive(uint16_t port, std::function&lt; void(const std::vector&lt; uint8_t &gt; &amp;data, const std::string &amp;sourceIp)&gt; callback)'],['../classrb_1_1Udp.html#a26b83ec34f7e8fae59b73a58e9fc5542',1,'rb::Udp::onReceive(uint16_t port, std::function&lt; void(const std::string &amp;data, const std::string &amp;sourceIp)&gt; callback)']]],
+  ['opensocket_2',['openSocket',['../classrb_1_1Udp.html#ae4e24371caa57862aac3d59bade85872',1,'rb::Udp']]]
 ];

@@ -1,6 +1,4 @@
 var searchData=
 [
-  ['rbprotocol_5faxis_5fmax_0',['RBPROTOCOL_AXIS_MAX',['../rbprotocol_8h.html#aff3b9e51cfdfcd65409f3e43b11d2055',1,'rbprotocol.h']]],
-  ['rbprotocol_5faxis_5fmin_1',['RBPROTOCOL_AXIS_MIN',['../rbprotocol_8h.html#a296e089ddda9b68fcd422f246d45c873',1,'rbprotocol.h']]],
-  ['rbprotocol_5fport_2',['RBPROTOCOL_PORT',['../rbprotocol_8h.html#af4caabb7a561cb476fb6bd2235cf1009',1,'rbprotocol.h']]]
+  ['listenq_0',['LISTENQ',['../rbwebserver__internal_8h.html#a41a458f49434afe16fb9eec6735a09ad',1,'rbwebserver_internal.h']]]
 ];

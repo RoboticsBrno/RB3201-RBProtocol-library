@@ -1,28 +1,5 @@
 var searchData=
 [
-  ['rb_0',['rb',['../namespacerb.html',1,'']]],
-  ['rb_5fweb_5fadd_5ffile_1',['rb_web_add_file',['../rbwebserver_8h.html#ae4358510ea1be5ecac08f5b4f0f5d081',1,'rbwebserver.h']]],
-  ['rb_5fweb_5fset_5fextra_5fcallback_2',['rb_web_set_extra_callback',['../rbwebserver_8h.html#a40594b2ef942441de26a0dfcb2f4919e',1,'rbwebserver.h']]],
-  ['rb_5fweb_5fstart_3',['rb_web_start',['../rbwebserver_8h.html#aef42fd193c622075b8aa02218a974a91',1,'rbwebserver.h']]],
-  ['rbcontrol_5fwifi_2ehpp_4',['RBControl_wifi.hpp',['../RBControl__wifi_8hpp.html',1,'']]],
-  ['rbjson_5',['rbjson',['../namespacerbjson.html',1,'']]],
-  ['rbjson_2ecpp_6',['rbjson.cpp',['../rbjson_8cpp.html',1,'']]],
-  ['rbjson_2eh_7',['rbjson.h',['../rbjson_8h.html',1,'']]],
-  ['rbprotocol_8',['RbProtocol',['../index.html',1,'']]],
-  ['rbprotocol_2ecpp_9',['rbprotocol.cpp',['../rbprotocol_8cpp.html',1,'']]],
-  ['rbprotocol_2eh_10',['rbprotocol.h',['../rbprotocol_8h.html',1,'']]],
-  ['rbprotocol_5faxis_5fmax_11',['RBPROTOCOL_AXIS_MAX',['../rbprotocol_8h.html#aff3b9e51cfdfcd65409f3e43b11d2055',1,'rbprotocol.h']]],
-  ['rbprotocol_5faxis_5fmin_12',['RBPROTOCOL_AXIS_MIN',['../rbprotocol_8h.html#a296e089ddda9b68fcd422f246d45c873',1,'rbprotocol.h']]],
-  ['rbprotocol_5fport_13',['RBPROTOCOL_PORT',['../rbprotocol_8h.html#af4caabb7a561cb476fb6bd2235cf1009',1,'rbprotocol.h']]],
-  ['rbtcp_2ecpp_14',['rbtcp.cpp',['../rbtcp_8cpp.html',1,'']]],
-  ['rbtcp_2eh_15',['rbtcp.h',['../rbtcp_8h.html',1,'']]],
-  ['rbudp_2ecpp_16',['rbudp.cpp',['../rbudp_8cpp.html',1,'']]],
-  ['rbudp_2eh_17',['rbudp.h',['../rbudp_8h.html',1,'']]],
-  ['rbwebserver_2eh_18',['rbwebserver.h',['../rbwebserver_8h.html',1,'']]],
-  ['rbwifi_2eh_19',['rbwifi.h',['../rbwifi_8h.html',1,'']]],
-  ['rbwifi_5fnetif_2ecpp_20',['rbwifi_netif.cpp',['../rbwifi__netif_8cpp.html',1,'']]],
-  ['rbwifi_5ftcpip_2ecpp_21',['rbwifi_tcpip.cpp',['../rbwifi__tcpip_8cpp.html',1,'']]],
-  ['readme_2emd_22',['README.md',['../README_8md.html',1,'']]],
-  ['remove_23',['remove',['../classrbjson_1_1Array.html#ae5d5e07d40e3968b6cd727cd93d5e4fa',1,'rbjson::Array::remove()'],['../classrbjson_1_1Object.html#aab0785202f5609b50a2c517f4be6e1a8',1,'rbjson::Object::remove()']]],
-  ['removecallback_24',['removeCallback',['../classrb_1_1Udp.html#ad82a2b3d0c9188fdb50cd97b6220d8c4',1,'rb::Udp::removeCallback()'],['../classrb_1_1TcpSocket.html#a17f2b156f7b89f8542994d15ba8211b5',1,'rb::TcpSocket::removeCallback()']]]
+  ['listenq_0',['LISTENQ',['../rbwebserver__internal_8h.html#a41a458f49434afe16fb9eec6735a09ad',1,'rbwebserver_internal.h']]],
+  ['log_5faccess_1',['log_access',['../rbwebserver__internal_8h.html#afc9b6f7dbae7c41b589d9399935913db',1,'rbwebserver_internal.h']]]
 ];

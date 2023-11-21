@@ -73,44 +73,65 @@ $(function() {
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#namespaces">Namespaces</a> &#124;
-<a href="#define-members">Macros</a>  </div>
+<a href="#define-members">Macros</a> &#124;
+<a href="#enum-members">Enumerations</a>  </div>
   <div class="headertitle"><div class="title">rbprotocol.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;freertos/FreeRTOS.h&gt;</code><br />
+<div class="textblock"><code>#include &lt;esp_err.h&gt;</code><br />
+<code>#include &lt;freertos/FreeRTOS.h&gt;</code><br />
+<code>#include &lt;freertos/queue.h&gt;</code><br />
+<code>#include &lt;freertos/task.h&gt;</code><br />
 <code>#include &lt;functional&gt;</code><br />
-<code>#include &lt;mutex&gt;</code><br />
-<code>#include &lt;stdarg.h&gt;</code><br />
-<code>#include &lt;string&gt;</code><br />
-<code>#include &lt;vector&gt;</code><br />
 <code>#include &lt;lwip/arch.h&gt;</code><br />
 <code>#include &lt;lwip/sockets.h&gt;</code><br />
+<code>#include &lt;memory&gt;</code><br />
+<code>#include &lt;mutex&gt;</code><br />
+<code>#include &lt;string&gt;</code><br />
+<code>#include &lt;vector&gt;</code><br />
+<code>#include &lt;stdarg.h&gt;</code><br />
 <code>#include &quot;<a class="el" href="rbjson_8h_source.html">rbjson.h</a>&quot;</code><br />
 </div>
 <p><a href="rbprotocol_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrb_1_1internal_1_1ProtocolAddrUdp.html">rb::internal::ProtocolAddrUdp</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrb_1_1internal_1_1ProtocolAddrWs.html">rb::internal::ProtocolAddrWs</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrb_1_1internal_1_1ProtocolAddr.html">rb::internal::ProtocolAddr</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrb_1_1internal_1_1QueueItem.html">rb::internal::QueueItem</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrb_1_1ProtocolConfig.html">rb::ProtocolConfig</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classrb_1_1Protocol.html">rb::Protocol</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Class that manages the RBProtocol communication.  <a href="classrb_1_1Protocol.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespacerb"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacerb.html">rb</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespacerb_1_1internal"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacerb_1_1internal.html">rb::internal</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:af4caabb7a561cb476fb6bd2235cf1009"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="rbprotocol_8h.html#af4caabb7a561cb476fb6bd2235cf1009">RBPROTOCOL_PORT</a>&#160;&#160;&#160;42424</td></tr>
-<tr class="memdesc:af4caabb7a561cb476fb6bd2235cf1009"><td class="mdescLeft">&#160;</td><td class="mdescRight">The default RBProtocol port.  <a href="rbprotocol_8h.html#af4caabb7a561cb476fb6bd2235cf1009">More...</a><br /></td></tr>
-<tr class="separator:af4caabb7a561cb476fb6bd2235cf1009"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a296e089ddda9b68fcd422f246d45c873"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="rbprotocol_8h.html#a296e089ddda9b68fcd422f246d45c873">RBPROTOCOL_AXIS_MIN</a>&#160;&#160;&#160;(-32767)</td></tr>
 <tr class="memdesc:a296e089ddda9b68fcd422f246d45c873"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minimal value of axes in "joy" command.  <a href="rbprotocol_8h.html#a296e089ddda9b68fcd422f246d45c873">More...</a><br /></td></tr>
 <tr class="separator:a296e089ddda9b68fcd422f246d45c873"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aff3b9e51cfdfcd65409f3e43b11d2055"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="rbprotocol_8h.html#aff3b9e51cfdfcd65409f3e43b11d2055">RBPROTOCOL_AXIS_MAX</a>&#160;&#160;&#160;(32767)</td></tr>
 <tr class="memdesc:aff3b9e51cfdfcd65409f3e43b11d2055"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximal value of axes in "joy" command.  <a href="rbprotocol_8h.html#aff3b9e51cfdfcd65409f3e43b11d2055">More...</a><br /></td></tr>
 <tr class="separator:aff3b9e51cfdfcd65409f3e43b11d2055"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:a15bdb8538e7ba596ce9242c39113f9c0"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacerb_1_1internal.html#a15bdb8538e7ba596ce9242c39113f9c0">rb::internal::ProtBackendType</a> : uint8_t { <a class="el" href="namespacerb_1_1internal.html#a15bdb8538e7ba596ce9242c39113f9c0a1add6d6861390f5befdcb252f41240d9">rb::internal::PROT_NONE</a> = 0
+, <a class="el" href="namespacerb_1_1internal.html#a15bdb8538e7ba596ce9242c39113f9c0a8fc2d6a30dba2131a4c565e103eb8de8">rb::internal::PROT_UDP</a> = 1
+, <a class="el" href="namespacerb_1_1internal.html#a15bdb8538e7ba596ce9242c39113f9c0a554fa9b5102ff067bcbe93af84fb23ed">rb::internal::PROT_WS</a> = 2
+ }</td></tr>
+<tr class="separator:a15bdb8538e7ba596ce9242c39113f9c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="aff3b9e51cfdfcd65409f3e43b11d2055" name="aff3b9e51cfdfcd65409f3e43b11d2055"></a>
@@ -145,26 +166,10 @@ Macros</h2></td></tr>
 
 </div>
 </div>
-<a id="af4caabb7a561cb476fb6bd2235cf1009" name="af4caabb7a561cb476fb6bd2235cf1009"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af4caabb7a561cb476fb6bd2235cf1009">&#9670;&#160;</a></span>RBPROTOCOL_PORT</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define RBPROTOCOL_PORT&#160;&#160;&#160;42424</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>The default RBProtocol port. </p>
-
-</div>
-</div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Jul 11 2023 16:19:52 for RBProtocol by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.5
+Generated on Tue Nov 21 2023 18:09:19 for RBProtocol by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.5
 </small></address>
 </body>
 </html>

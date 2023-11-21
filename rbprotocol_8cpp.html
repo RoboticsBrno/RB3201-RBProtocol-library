@@ -72,23 +72,15 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#namespaces">Namespaces</a> &#124;
-<a href="#define-members">Macros</a> &#124;
-<a href="#var-members">Variables</a>  </div>
+<a href="#define-members">Macros</a>  </div>
   <div class="headertitle"><div class="title">rbprotocol.cpp File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;errno.h&gt;</code><br />
-<code>#include &lt;memory&gt;</code><br />
-<code>#include &lt;stdarg.h&gt;</code><br />
-<code>#include &lt;stdio.h&gt;</code><br />
-<code>#include &lt;string.h&gt;</code><br />
-<code>#include &lt;sys/time.h&gt;</code><br />
-<code>#include &quot;esp_log.h&quot;</code><br />
-<code>#include &quot;lwip/err.h&quot;</code><br />
-<code>#include &quot;lwip/sockets.h&quot;</code><br />
-<code>#include &quot;lwip/sys.h&quot;</code><br />
-<code>#include &quot;<a class="el" href="rbjson_8h_source.html">rbjson.h</a>&quot;</code><br />
+<div class="textblock"><code>#include &lt;esp_log.h&gt;</code><br />
+<code>#include &lt;cstring&gt;</code><br />
 <code>#include &quot;<a class="el" href="rbprotocol_8h_source.html">rbprotocol.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="rbprotocoludp_8h_source.html">rbprotocoludp.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="rbprotocolws_8h_source.html">rbprotocolws.h</a>&quot;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
 Namespaces</h2></td></tr>
@@ -97,17 +89,14 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
+<tr class="memitem:a771b206cd392163173326e6a40d13db3"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="rbprotocol_8cpp.html#a771b206cd392163173326e6a40d13db3">RBPROT_TAG</a>&#160;&#160;&#160;&quot;RbProtocol&quot;</td></tr>
+<tr class="separator:a771b206cd392163173326e6a40d13db3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a73adf9c10352865ff95b5f46e642c560"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="rbprotocol_8cpp.html#a73adf9c10352865ff95b5f46e642c560">MS_TO_TICKS</a>(ms)&#160;&#160;&#160;((portTICK_PERIOD_MS &lt;= ms) ? (ms / portTICK_PERIOD_MS) : 1)</td></tr>
 <tr class="separator:a73adf9c10352865ff95b5f46e642c560"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4845c450119b9637afc9b295dc2887d8"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="rbprotocol_8cpp.html#a4845c450119b9637afc9b295dc2887d8">MUST_ARRIVE_TIMER_PERIOD</a>&#160;&#160;&#160;<a class="el" href="rbprotocol_8cpp.html#a73adf9c10352865ff95b5f46e642c560">MS_TO_TICKS</a>(100)</td></tr>
 <tr class="separator:a4845c450119b9637afc9b295dc2887d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a648a32d4cdee19015beaaa7f6435513a"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="rbprotocol_8cpp.html#a648a32d4cdee19015beaaa7f6435513a">MUST_ARRIVE_ATTEMPTS</a>&#160;&#160;&#160;15</td></tr>
 <tr class="separator:a648a32d4cdee19015beaaa7f6435513a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
-Variables</h2></td></tr>
-<tr class="memitem:a5a85b9c772bbeb480b209a3e6ea92b4c"><td class="memItemLeft" align="right" valign="top">static const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="rbprotocol_8cpp.html#a5a85b9c772bbeb480b209a3e6ea92b4c">TAG</a> = &quot;RbProtocol&quot;</td></tr>
-<tr class="separator:a5a85b9c772bbeb480b209a3e6ea92b4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="a73adf9c10352865ff95b5f46e642c560" name="a73adf9c10352865ff95b5f46e642c560"></a>
@@ -156,25 +145,16 @@ Variables</h2></td></tr>
 
 </div>
 </div>
-<h2 class="groupheader">Variable Documentation</h2>
-<a id="a5a85b9c772bbeb480b209a3e6ea92b4c" name="a5a85b9c772bbeb480b209a3e6ea92b4c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5a85b9c772bbeb480b209a3e6ea92b4c">&#9670;&#160;</a></span>TAG</h2>
+<a id="a771b206cd392163173326e6a40d13db3" name="a771b206cd392163173326e6a40d13db3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a771b206cd392163173326e6a40d13db3">&#9670;&#160;</a></span>RBPROT_TAG</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">const char* TAG = &quot;RbProtocol&quot;</td>
+          <td class="memname">#define RBPROT_TAG&#160;&#160;&#160;&quot;RbProtocol&quot;</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 </div>
@@ -182,7 +162,7 @@ Variables</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Jul 11 2023 16:19:52 for RBProtocol by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.5
+Generated on Tue Nov 21 2023 18:09:19 for RBProtocol by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.5
 </small></address>
 </body>
 </html>

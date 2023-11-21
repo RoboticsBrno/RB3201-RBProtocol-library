@@ -1,7 +1,5 @@
 var searchData=
 [
-  ['tag_0',['TAG',['../rbprotocol_8cpp.html#a5a85b9c772bbeb480b209a3e6ea92b4c',1,'TAG():&#160;rbprotocol.cpp'],['../rbtcp_8cpp.html#a5a85b9c772bbeb480b209a3e6ea92b4c',1,'TAG():&#160;rbtcp.cpp'],['../rbudp_8cpp.html#a5a85b9c772bbeb480b209a3e6ea92b4c',1,'TAG():&#160;rbudp.cpp']]],
-  ['toknext_1',['toknext',['../structjsmn__parser.html#af640efd7d154218124a964b65f114bff',1,'jsmn_parser']]],
-  ['toksuper_2',['toksuper',['../structjsmn__parser.html#af11fcec48d9f1298909777a12f1d1e39',1,'jsmn_parser']]],
-  ['type_3',['type',['../structjsmntok.html#aaab022b622347db309f6d4ed9172cc6c',1,'jsmntok']]]
+  ['fd_0',['fd',['../structrb_1_1internal_1_1ProtocolAddrWs.html#adbd33b613e1f2e48b1fa7eb51f6d56a4',1,'rb::internal::ProtocolAddrWs']]],
+  ['filename_1',['filename',['../structhttp__request.html#aee6a82fc72b2bb9a043bd1c64ed8692f',1,'http_request']]]
 ];

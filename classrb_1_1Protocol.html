@@ -78,13 +78,11 @@ $(function() {
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="classrb_1_1Protocol-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">rb::Protocol Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
-
-<p>Class that manages the RBProtocol communication.  
- <a href="classrb_1_1Protocol.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="rbprotocol_8h_source.html">rbprotocol.h</a>&gt;</code></p>
 <table class="memberdecls">
@@ -99,26 +97,19 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a24772225049244ddd7d391caa75f18ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab263974af952bd94b8b30aa14999ea63"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classrb_1_1Protocol.html#ab263974af952bd94b8b30aa14999ea63">~Protocol</a> ()</td></tr>
 <tr class="separator:ab263974af952bd94b8b30aa14999ea63"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afbe9baac0f5862fcde8021a1f93d6dd2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classrb_1_1Protocol.html#afbe9baac0f5862fcde8021a1f93d6dd2">start</a> (uint16_t port=<a class="el" href="rbprotocol_8h.html#af4caabb7a561cb476fb6bd2235cf1009">RBPROTOCOL_PORT</a>)</td></tr>
-<tr class="memdesc:afbe9baac0f5862fcde8021a1f93d6dd2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start listening for UDP packets on port.  <a href="classrb_1_1Protocol.html#afbe9baac0f5862fcde8021a1f93d6dd2">More...</a><br /></td></tr>
-<tr class="separator:afbe9baac0f5862fcde8021a1f93d6dd2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58b5a8ccac5208cecc3db33ebad4df77"><td class="memItemLeft" align="right" valign="top">esp_err_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classrb_1_1Protocol.html#a58b5a8ccac5208cecc3db33ebad4df77">start</a> (const <a class="el" href="structrb_1_1ProtocolConfig.html">ProtocolConfig</a> &amp;cfg=<a class="el" href="classrb_1_1Protocol.html#a03d108418920da4fba628fc419a1a187">DEFAULT_CONFIG</a>)</td></tr>
+<tr class="separator:a58b5a8ccac5208cecc3db33ebad4df77"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a68d3d8deb183955b3bcf3574b5c3d13f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classrb_1_1Protocol.html#a68d3d8deb183955b3bcf3574b5c3d13f">stop</a> ()</td></tr>
-<tr class="memdesc:a68d3d8deb183955b3bcf3574b5c3d13f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop listening.  <a href="classrb_1_1Protocol.html#a68d3d8deb183955b3bcf3574b5c3d13f">More...</a><br /></td></tr>
 <tr class="separator:a68d3d8deb183955b3bcf3574b5c3d13f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abedace743927a42aa20c3a55c36ffcbc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classrb_1_1Protocol.html#abedace743927a42aa20c3a55c36ffcbc">send</a> (const char *cmd, <a class="el" href="classrbjson_1_1Object.html">rbjson::Object</a> *params=NULL)</td></tr>
-<tr class="memdesc:abedace743927a42aa20c3a55c36ffcbc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Send command cmd with params, without making sure it arrives.  <a href="classrb_1_1Protocol.html#abedace743927a42aa20c3a55c36ffcbc">More...</a><br /></td></tr>
 <tr class="separator:abedace743927a42aa20c3a55c36ffcbc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7ba3c35f8dda16035f2fcdb130605080"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classrb_1_1Protocol.html#a7ba3c35f8dda16035f2fcdb130605080">send_mustarrive</a> (const char *cmd, <a class="el" href="classrbjson_1_1Object.html">rbjson::Object</a> *params=NULL)</td></tr>
-<tr class="memdesc:a7ba3c35f8dda16035f2fcdb130605080"><td class="mdescLeft">&#160;</td><td class="mdescRight">Send command cmd with params and make sure it arrives.  <a href="classrb_1_1Protocol.html#a7ba3c35f8dda16035f2fcdb130605080">More...</a><br /></td></tr>
 <tr class="separator:a7ba3c35f8dda16035f2fcdb130605080"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a670cc142fd37b6ada10bb6b40d9916a4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classrb_1_1Protocol.html#a670cc142fd37b6ada10bb6b40d9916a4">send_log</a> (const char *fmt,...)</td></tr>
-<tr class="memdesc:a670cc142fd37b6ada10bb6b40d9916a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Send a message to the android app.  <a href="classrb_1_1Protocol.html#a670cc142fd37b6ada10bb6b40d9916a4">More...</a><br /></td></tr>
 <tr class="separator:a670cc142fd37b6ada10bb6b40d9916a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2413477479fd4a0e711c4c77c18983f5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classrb_1_1Protocol.html#a2413477479fd4a0e711c4c77c18983f5">send_log</a> (const char *fmt, va_list args)</td></tr>
-<tr class="memdesc:a2413477479fd4a0e711c4c77c18983f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Send a message to the android app.  <a href="classrb_1_1Protocol.html#a2413477479fd4a0e711c4c77c18983f5">More...</a><br /></td></tr>
 <tr class="separator:a2413477479fd4a0e711c4c77c18983f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acec41ffa0281fa8a398fe076f2a8d550"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classrb_1_1Protocol.html#acec41ffa0281fa8a398fe076f2a8d550">send_log</a> (const std::string &amp;str)</td></tr>
-<tr class="memdesc:acec41ffa0281fa8a398fe076f2a8d550"><td class="mdescLeft">&#160;</td><td class="mdescRight">Send a message to the android app.  <a href="classrb_1_1Protocol.html#acec41ffa0281fa8a398fe076f2a8d550">More...</a><br /></td></tr>
 <tr class="separator:acec41ffa0281fa8a398fe076f2a8d550"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4d43e5162455ab5c138ee33fac2e3e12"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classrb_1_1Protocol.html#a4d43e5162455ab5c138ee33fac2e3e12">is_possessed</a> () const</td></tr>
 <tr class="memdesc:a4d43e5162455ab5c138ee33fac2e3e12"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true of the device is possessed (somebody connected to it)  <a href="classrb_1_1Protocol.html#a4d43e5162455ab5c138ee33fac2e3e12">More...</a><br /></td></tr>
@@ -129,10 +120,13 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a9b4ddbf76f34a70abb57bd49eecc4a25"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a646465e18445d982c08b8e9820c9ea17"><td class="memItemLeft" align="right" valign="top">TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classrb_1_1Protocol.html#a646465e18445d982c08b8e9820c9ea17">getTaskRecv</a> () const</td></tr>
 <tr class="separator:a646465e18445d982c08b8e9820c9ea17"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
+Static Public Attributes</h2></td></tr>
+<tr class="memitem:a03d108418920da4fba628fc419a1a187"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="structrb_1_1ProtocolConfig.html">ProtocolConfig</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classrb_1_1Protocol.html#a03d108418920da4fba628fc419a1a187">DEFAULT_CONFIG</a></td></tr>
+<tr class="separator:a03d108418920da4fba628fc419a1a187"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p >Class that manages the RBProtocol communication. </p>
-</div><h2 class="groupheader">Member Typedef Documentation</h2>
+<h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="ae12795c988e29b9d6fb5bf6af218c24d" name="ae12795c988e29b9d6fb5bf6af218c24d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae12795c988e29b9d6fb5bf6af218c24d">&#9670;&#160;</a></span>callback_t</h2>
 
@@ -185,7 +179,6 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p >The onPacketReceivedCallback is called when a packet arrives. It runs on a separate task, only single packet is processed at a time. </p>
 
 </div>
 </div>
@@ -320,9 +313,6 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Send command cmd with params, without making sure it arrives. </p>
-<p >If you pass the params object, you are responsible for its deletion. </p>
-
 </div>
 </div>
 <a id="a2413477479fd4a0e711c4c77c18983f5" name="a2413477479fd4a0e711c4c77c18983f5"></a>
@@ -350,8 +340,6 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>Send a message to the android app. </p>
 
 </div>
 </div>
@@ -381,8 +369,6 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Send a message to the android app. </p>
-
 </div>
 </div>
 <a id="acec41ffa0281fa8a398fe076f2a8d550" name="acec41ffa0281fa8a398fe076f2a8d550"></a>
@@ -400,8 +386,6 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>Send a message to the android app. </p>
 
 </div>
 </div>
@@ -431,29 +415,23 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Send command cmd with params and make sure it arrives. </p>
-<p >If you pass the params object, it has to be heap-allocated and RbProtocol becomes its owner - you MUST NOT delete it.</p>
-<dl class="section return"><dt>Returns</dt><dd>id of the mustarrive packet, you can use it in is_mustarrive_complete. Returns UINT32_MAX if the sending failed. </dd></dl>
-
 </div>
 </div>
-<a id="afbe9baac0f5862fcde8021a1f93d6dd2" name="afbe9baac0f5862fcde8021a1f93d6dd2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afbe9baac0f5862fcde8021a1f93d6dd2">&#9670;&#160;</a></span>start()</h2>
+<a id="a58b5a8ccac5208cecc3db33ebad4df77" name="a58b5a8ccac5208cecc3db33ebad4df77"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a58b5a8ccac5208cecc3db33ebad4df77">&#9670;&#160;</a></span>start()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void rb::Protocol::start </td>
+          <td class="memname">esp_err_t rb::Protocol::start </td>
           <td>(</td>
-          <td class="paramtype">uint16_t&#160;</td>
-          <td class="paramname"><em>port</em> = <code><a class="el" href="rbprotocol_8h.html#af4caabb7a561cb476fb6bd2235cf1009">RBPROTOCOL_PORT</a></code></td><td>)</td>
+          <td class="paramtype">const <a class="el" href="structrb_1_1ProtocolConfig.html">ProtocolConfig</a> &amp;&#160;</td>
+          <td class="paramname"><em>cfg</em> = <code><a class="el" href="classrb_1_1Protocol.html#a03d108418920da4fba628fc419a1a187">DEFAULT_CONFIG</a></code></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>Start listening for UDP packets on port. </p>
 
 </div>
 </div>
@@ -472,8 +450,35 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Stop listening. </p>
+</div>
+</div>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a id="a03d108418920da4fba628fc419a1a187" name="a03d108418920da4fba628fc419a1a187"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a03d108418920da4fba628fc419a1a187">&#9670;&#160;</a></span>DEFAULT_CONFIG</h2>
 
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="structrb_1_1ProtocolConfig.html">ProtocolConfig</a> rb::Protocol::DEFAULT_CONFIG</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= {</div>
+<div class="line">    .enable_udp = <span class="keyword">true</span>,</div>
+<div class="line">    .enable_ws = <span class="keyword">true</span>,</div>
+<div class="line">    .ws_register_with_webserver = <span class="keyword">true</span>,</div>
+<div class="line">    .udp_port = 42424,</div>
+<div class="line">}</div>
+</div><!-- fragment -->
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following files:<ul>
@@ -483,7 +488,7 @@ Public Member Functions</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Jul 11 2023 16:19:52 for RBProtocol by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.5
+Generated on Tue Nov 21 2023 18:09:19 for RBProtocol by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.5
 </small></address>
 </body>
 </html>

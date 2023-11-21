@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['jsmn_5fapi_0',['JSMN_API',['../jsmn_8h.html#acc2ead0c277738a32734a4b5a09cf8cc',1,'jsmn.h']]]
+  ['ans_5fttl_5fsec_0',['ANS_TTL_SEC',['../rbdns_8cpp.html#a0b823155c6d46c6910391b04fbd31376',1,'rbdns.cpp']]]
 ];
