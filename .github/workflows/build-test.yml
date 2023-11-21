@@ -11,6 +11,7 @@ jobs:
         example:
           - examples/basic
         conf:
+          - esp32-idf3-arduino.ini # Robotka runs this
           - esp32-idf4-arduino.ini
           - esp32-idf5-idf.ini
           - esp32s3-idf4-arduino.ini
