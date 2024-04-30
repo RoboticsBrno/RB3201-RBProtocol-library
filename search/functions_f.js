@@ -11,6 +11,6 @@ var searchData=
   ['startap_8',['startAp',['../classrb_1_1WiFi.html#a3d7324abf87549a6b2294e1424b5e5a3',1,'rb::WiFi']]],
   ['stop_9',['stop',['../classrb_1_1Protocol.html#a68d3d8deb183955b3bcf3574b5c3d13f',1,'rb::Protocol']]],
   ['str_10',['str',['../classrbjson_1_1Value.html#a2900f83e330e3af7a3020517409f3073',1,'rbjson::Value']]],
-  ['string_11',['String',['../classrbjson_1_1String.html#ac01e93087cd918af7bd384a13263bfab',1,'rbjson::String::String(const char *value=&quot;&quot;)'],['../classrbjson_1_1String.html#a665377e5082ea0d4bf20146e7a55b965',1,'rbjson::String::String(const std::string &amp;value)']]],
+  ['string_11',['string',['../classrbjson_1_1String.html#ac01e93087cd918af7bd384a13263bfab',1,'rbjson::String::String(const char *value=&quot;&quot;)'],['../classrbjson_1_1String.html#a665377e5082ea0d4bf20146e7a55b965',1,'rbjson::String::String(const std::string &amp;value)']]],
   ['swapdata_12',['swapData',['../classrbjson_1_1Object.html#af8e95020b2567b96955d038f1fb4120a',1,'rbjson::Object']]]
 ];
