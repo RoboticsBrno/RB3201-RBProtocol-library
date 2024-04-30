@@ -417,41 +417,45 @@ exit:
 void Protocol::recv_task(void* selfVoid) {
     auto& self = *((Protocol*)selfVoid);
 
-    ProtocolAddr recv_addr;
-    std::vector<uint8_t> buf;
-    buf.resize(64);
+    {
+        // destructors do not run after vTaskDelete, so put this vector in separate block to enforce it
+        std::vector<uint8_t> buf;
+        buf.resize(64);
 
-    while (xTaskNotifyWait(0, 0, NULL, 0) == pdFALSE) {
-        bool received_msg = false;
+        ProtocolAddr recv_addr;
 
-        self.m_mutex.lock();
-        if (self.m_udp) {
-            auto pkt = self.m_udp->recv_iter(buf, recv_addr);
-            if (pkt) {
-                self.m_mutex.unlock();
-                self.handle_msg(recv_addr, pkt.get());
-                pkt.reset();
-                received_msg = true;
-                self.m_mutex.lock();
+        while (xTaskNotifyWait(0, 0, NULL, 0) == pdFALSE) {
+            bool received_msg = false;
+
+            self.m_mutex.lock();
+            if (self.m_udp) {
+                auto pkt = self.m_udp->recv_iter(buf, recv_addr);
+                if (pkt) {
+                    self.m_mutex.unlock();
+                    self.handle_msg(recv_addr, pkt.get());
+                    pkt.reset();
+                    received_msg = true;
+                    self.m_mutex.lock();
+                }
             }
-        }
 
-        if (self.m_ws) {
-            auto pkt = self.m_ws->recv_iter(buf, recv_addr);
-            if (pkt) {
-                self.m_mutex.unlock();
-                self.handle_msg(recv_addr, pkt.get());
-                pkt.reset();
-                received_msg = true;
+            if (self.m_ws) {
+                auto pkt = self.m_ws->recv_iter(buf, recv_addr);
+                if (pkt) {
+                    self.m_mutex.unlock();
+                    self.handle_msg(recv_addr, pkt.get());
+                    pkt.reset();
+                    received_msg = true;
+                } else {
+                    self.m_mutex.unlock();
+                }
             } else {
                 self.m_mutex.unlock();
             }
-        } else {
-            self.m_mutex.unlock();
-        }
 
-        if (!received_msg) {
-            vTaskDelay(MS_TO_TICKS(10));
+            if (!received_msg) {
+                vTaskDelay(MS_TO_TICKS(10));
+            }
         }
     }
 
