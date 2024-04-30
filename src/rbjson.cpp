@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <algorithm>
 
 #include "esp_log.h"
 
@@ -225,34 +226,53 @@ bool Object::equals(const Value& other) const {
         return false;
 
     const auto& obj = static_cast<const Object&>(other);
-    if (m_members.size() != obj.m_members.size())
+
+    const size_t size = m_members.size();
+    if (size != obj.m_members.size())
         return false;
 
-    for (const auto& pair : m_members) {
-        const auto itr = obj.m_members.find(pair.first);
-        if (itr == obj.m_members.end() || !itr->second->equals(*pair.second))
+    auto itr_a = m_members.cbegin();
+    auto itr_b = obj.m_members.cbegin();
+    for(size_t i = 0; i < size; ++i) {
+        if(itr_a->first != itr_b->first || !itr_a->second->equals(*itr_b->second))
             return false;
+        ++itr_a;
+        ++itr_b;
     }
+
     return true;
 }
 
 Value* Object::copy() const {
     auto* res = new Object();
     for (const auto& pair : m_members) {
-        res->m_members[pair.first] = pair.second->copy();
+        res->m_members.emplace_back(std::make_pair(pair.first, pair.second->copy()));
     }
     return res;
 }
 
+Object::container_t::const_iterator Object::lower_bound_const(const std::string& key) const {
+    return std::lower_bound(m_members.cbegin(), m_members.cend(), key, [] (const auto& itr, const std::string& key) {
+        return itr.first < key;
+    });
+}
+
+Object::container_t::iterator Object::lower_bound(const std::string& key) {
+    return std::lower_bound(m_members.begin(), m_members.end(), key, [] (const auto& itr, const std::string& key) {
+        return itr.first < key;
+    });
+}
+
 bool Object::contains(const std::string& key) const {
-    return m_members.find(key) != m_members.end();
+    const auto lower = lower_bound_const(key);
+    return lower != m_members.end() && lower->first == key;
 }
 
 Value* Object::get(const std::string& key) const {
-    const auto itr = m_members.find(key);
-    if (itr == m_members.cend())
+    const auto lower = lower_bound_const(key);
+    if (lower == m_members.end() || lower->first != key)
         return NULL;
-    return itr->second;
+    return lower->second;
 }
 
 Object* Object::getObject(const std::string& key) const {
@@ -308,12 +328,12 @@ bool Object::getBool(const std::string& key, bool def) const {
 }
 
 void Object::set(const std::string& key, Value* value) {
-    auto itr = m_members.find(key);
-    if (itr != m_members.end()) {
-        delete itr->second;
-        itr->second = value;
+    auto lower = lower_bound(key);
+    if (lower != m_members.end() && lower->first == key) {
+        delete lower->second;
+        lower->second = value;
     } else {
-        m_members[key] = value;
+        m_members.emplace(lower, std::make_pair(key, value));
     }
 }
 
@@ -326,10 +346,10 @@ void Object::set(const std::string& key, double number) {
 }
 
 void Object::remove(const std::string& key) {
-    auto itr = m_members.find(key);
-    if (itr != m_members.end()) {
-        delete itr->second;
-        m_members.erase(itr);
+    const auto lower = lower_bound_const(key);
+    if (lower != m_members.end() && lower->first == key) {
+        delete lower->second;
+        m_members.erase(lower);
     }
 }
 
