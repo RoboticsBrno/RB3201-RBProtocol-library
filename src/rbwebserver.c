@@ -510,22 +510,23 @@ static void tiny_web_task(void* portPtr) {
     struct sockaddr_in clientaddr;
     int listenfd, connfd;
     socklen_t clientlen = sizeof clientaddr;
+    TaskHandle_t stopping_task = NULL;
 
     listenfd = open_listenfd(port);
     if (listenfd > 0) {
         ESP_LOGI(TAG, "Listening on port %d", port);
     } else {
         ESP_LOGE(TAG, "failed to start: %s", strerror(errno));
-        return;
+        goto fail;
     }
 
     if (fcntl(listenfd, F_SETFL, O_NONBLOCK) == -1) {
         ESP_LOGE(TAG, "failed to set non-blocking: %s", strerror(errno));
         close(listenfd);
-        return;
+        goto fail;
     }
 
-    while (1) {
+    while (xTaskNotifyWait(0, 0xFFFFFFFF, (uint32_t*)&stopping_task, pdMS_TO_TICKS(10)) == pdFALSE) {
         connfd = accept(listenfd, (SA*)&clientaddr, &clientlen);
 
         if (connfd >= 0) {
@@ -538,13 +539,22 @@ static void tiny_web_task(void* portPtr) {
         } else if (errno != EWOULDBLOCK && errno != EAGAIN) {
             ESP_LOGE(TAG, "failed to accept: %s", strerror(errno));
         }
-
-        vTaskDelay(10 / portTICK_PERIOD_MS);
     }
+
+    close(listenfd);
+    goto exit;
+
+fail:
+    xTaskNotifyWait(0, 0xFFFFFFFF, (uint32_t*)&stopping_task, portMAX_DELAY);
+
+exit:
+    if(stopping_task)
+        xTaskNotify(stopping_task, 0, eNoAction);
+    vTaskDelete(NULL);
 }
 
 TaskHandle_t rb_web_start(int port) {
-    {
+    if(!esp_spiffs_mounted(NULL)) {
         esp_vfs_spiffs_conf_t conf = {
             .base_path = WORKING_DIRECTORY,
             .partition_label = NULL,
@@ -561,13 +571,18 @@ TaskHandle_t rb_web_start(int port) {
             } else {
                 ESP_LOGE(TAG, "Failed to initialize SPIFFS (%d)", ret);
             }
-            return pdFAIL;
+            return NULL;
         }
     }
 
     TaskHandle_t task;
     xTaskCreate(&tiny_web_task, "rbctrl_web", 3072, (void*)port, 2, &task);
     return task;
+}
+
+void rb_web_stop(TaskHandle_t web_task) {
+    xTaskNotify(web_task, (uint32_t)xTaskGetCurrentTaskHandle(), eSetValueWithOverwrite);
+    xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
 }
 
 esp_err_t rb_web_add_file(const char* filename, const char* data, size_t len) {
@@ -588,4 +603,8 @@ esp_err_t rb_web_add_file(const char* filename, const char* data, size_t len) {
 
     close(fd);
     return res;
+}
+
+const char *rb_web_get_files_root(void) {
+    return WORKING_DIRECTORY;
 }
