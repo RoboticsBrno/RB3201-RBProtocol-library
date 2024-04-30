@@ -1,6 +1,7 @@
 #include "esp_wifi.h"
 #include "rbwifi.h"
 
+// This is implementation for IDF >= 4.1
 #ifdef RBPROTOCOL_USE_NETIF
 
 #include "esp_log.h"
@@ -12,7 +13,8 @@
 
 #define TAG "RbWifi"
 
-static esp_netif_t* gNetIf = nullptr;
+static esp_netif_t *gNetIf = nullptr;
+static SemaphoreHandle_t gScanDoneEv = nullptr;
 
 namespace rb {
 
@@ -21,21 +23,24 @@ class WiFiInitializer {
 
 public:
     WiFiInitializer() {
-        ESP_ERROR_CHECK(nvs_flash_init());
+        //ESP_ERROR_CHECK(nvs_flash_init());
         ESP_ERROR_CHECK(esp_netif_init());
 
-        ESP_ERROR_CHECK(esp_event_loop_create_default());
+        auto err = esp_event_loop_create_default();
+        if(err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
+            ESP_ERROR_CHECK(err);
+        }
 
         esp_event_handler_instance_t instance_any_id;
         esp_event_handler_instance_t instance_got_ip;
         ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
             ESP_EVENT_ANY_ID,
-            &WiFi::eventHandler_netif,
+            &WiFi::eventHandler_netif_wifi,
             NULL,
             &instance_any_id));
         ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
             IP_EVENT_STA_GOT_IP,
-            &WiFi::eventHandler_netif,
+            &WiFi::eventHandler_netif_ip,
             NULL,
             &instance_got_ip));
 
@@ -62,7 +67,7 @@ void WiFi::connect(const char* ssid, const char* pass) {
     esp_wifi_stop();
 
     if (gNetIf) {
-        esp_netif_destroy(gNetIf);
+        esp_netif_destroy_default_wifi(gNetIf);
     }
 
     gNetIf = esp_netif_create_default_wifi_sta();
@@ -83,7 +88,7 @@ void WiFi::startAp(const char* ssid, const char* pass, uint8_t channel) {
     esp_wifi_stop();
 
     if (gNetIf) {
-        esp_netif_destroy(gNetIf);
+        esp_netif_destroy_default_wifi(gNetIf);
     }
 
     gNetIf = esp_netif_create_default_wifi_ap();
@@ -114,17 +119,87 @@ void WiFi::startAp(const char* ssid, const char* pass, uint8_t channel) {
     m_ip.store(ip_info.ip.addr);
 }
 
-void WiFi::eventHandler_netif(void* arg, esp_event_base_t event_base,
+esp_err_t WiFi::scanAsync(SemaphoreHandle_t *out_scan_done_event) {
+    init();
+
+    if(!out_scan_done_event) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    if(!gScanDoneEv) {
+        gScanDoneEv = xSemaphoreCreateBinary();
+    }
+    *out_scan_done_event = gScanDoneEv;
+
+    auto err = esp_wifi_scan_start(NULL, false);
+    if(err == ESP_ERR_WIFI_NOT_STARTED) {
+        WiFi::connect("", ""); // just start WiFi in station mode, with no target
+        err = esp_wifi_scan_start(NULL, false);
+    }
+    
+    if(err != ESP_OK) {
+        return err;
+    }
+
+    return ESP_OK;
+}
+
+std::vector<wifi_ap_record_t> WiFi::scanSync(esp_err_t *err_out) {
+    SemaphoreHandle_t done_ev;
+    auto err = WiFi::scanAsync(&done_ev);
+    if(err_out) {
+        *err_out = err;
+    }
+
+    if(err != ESP_OK) {
+        return {};
+    }
+
+    xSemaphoreTake(done_ev, pdMS_TO_TICKS(15000));
+
+    uint16_t num = 0;
+    err = esp_wifi_scan_get_ap_num(&num);
+    if(err != ESP_OK) {
+        if(err_out) {
+            *err_out = err;
+        }
+        return {};
+    }
+
+    std::vector<wifi_ap_record_t> results(num);
+    err = esp_wifi_scan_get_ap_records(&num, results.data());
+    if(err_out) {
+        *err_out = err;
+    }
+    return results;
+}
+
+void WiFi::eventHandler_netif_wifi(void* arg, esp_event_base_t event_base,
     int32_t event_id, void* event_data) {
 
-    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
-        ESP_LOGI(TAG, "SYSTEM_EVENT_STA_START");
-        esp_wifi_connect();
-    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        m_ip.store(0);
-        ESP_LOGI(TAG, "SYSTEM_EVENT_STA_DISCONNECTED");
-        esp_wifi_connect();
-    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+    switch(event_id) {
+        case WIFI_EVENT_STA_START:
+            ESP_LOGD(TAG, "SYSTEM_EVENT_STA_START");
+            esp_wifi_connect();
+            break;
+        case WIFI_EVENT_STA_DISCONNECTED:
+            m_ip.store(0);
+            ESP_LOGI(TAG, "SYSTEM_EVENT_STA_DISCONNECTED");
+            esp_wifi_connect();
+            break;
+        case WIFI_EVENT_SCAN_DONE: {
+            if(gScanDoneEv) {
+                xSemaphoreGive(gScanDoneEv);
+            }
+            break;
+        }
+    }
+}
+
+void WiFi::eventHandler_netif_ip(void* arg, esp_event_base_t event_base,
+    int32_t event_id, void* event_data) {
+
+    if (event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*)event_data;
 
         char buf[16];
