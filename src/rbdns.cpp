@@ -263,35 +263,39 @@ ssize_t DnsServer::processDnsQuestion(std::vector<uint8_t>& buff, ssize_t req_si
 void DnsServer::taskBody(void*) {
     auto& self = get();
 
+
     struct sockaddr_in addr;
     socklen_t addr_len = sizeof(struct sockaddr_in);
 
     ssize_t msg_size;
 
-    std::vector<uint8_t> buff;
-    buff.resize(64);
+    {
+        // vTaskDelete does not call destructors
+        std::vector<uint8_t> buff;
+        buff.resize(64);
 
-    while (true) {
-        msg_size = self.receivePacket(buff, &addr);
-        if (msg_size == -EBADF) {
-            break;
-        } else if (msg_size < 0) {
-            continue;
-        }
-
-        // Reset remaining data to 0
-        memset(buff.data() + msg_size, 0, buff.size() - msg_size);
-
-        ssize_t reply_size = self.processDnsQuestion(buff, msg_size);
-        if (reply_size < 0) {
-            continue;
-        }
-
-        if (sendto(self.m_socket, buff.data(), reply_size, 0, (struct sockaddr*)&addr, addr_len) < 0) {
-            const auto err = errno;
-            if (err == EBADF)
+        while (true) {
+            msg_size = self.receivePacket(buff, &addr);
+            if (msg_size == -EBADF) {
                 break;
-            ESP_LOGE(TAG, "error in sendto: %d %s, len %d!", err, strerror(err), reply_size);
+            } else if (msg_size < 0) {
+                continue;
+            }
+
+            // Reset remaining data to 0
+            memset(buff.data() + msg_size, 0, buff.size() - msg_size);
+
+            ssize_t reply_size = self.processDnsQuestion(buff, msg_size);
+            if (reply_size < 0) {
+                continue;
+            }
+
+            if (sendto(self.m_socket, buff.data(), reply_size, 0, (struct sockaddr*)&addr, addr_len) < 0) {
+                const auto err = errno;
+                if (err == EBADF)
+                    break;
+                ESP_LOGE(TAG, "error in sendto: %d %s, len %d!", err, strerror(err), reply_size);
+            }
         }
     }
 
