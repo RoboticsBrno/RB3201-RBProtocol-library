@@ -1,6 +1,7 @@
 #include "esp_wifi.h"
 #include "rbwifi.h"
 
+// This is implementation for IDF < 4.1
 #ifndef RBPROTOCOL_USE_NETIF
 
 #include "esp_log.h"
@@ -81,6 +82,17 @@ void WiFi::startAp(const char* ssid, const char* pass, uint8_t channel) {
     ESP_ERROR_CHECK(esp_wifi_start());
 
     esp_wifi_set_bandwidth(WIFI_IF_AP, WIFI_BW_HT20);
+}
+
+esp_err_t WiFi::scanAsync(SemaphoreHandle_t *out_scan_done_event) {
+    return ESP_ERR_NOT_SUPPORTED;
+}
+
+std::vector<wifi_ap_record_t> WiFi::scanSync(esp_err_t *err_out) {
+    if(err_out) {
+        *err_out = ESP_ERR_NOT_SUPPORTED;
+    }
+    return {};
 }
 
 esp_err_t WiFi::eventHandler_tcpip(void* ctx, system_event_t* event) {
