@@ -89,8 +89,13 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
+<tr class="memitem:aa1517a47266d177a71b9b19f1849311c" id="r_aa1517a47266d177a71b9b19f1849311c"><td class="memItemLeft" align="right" valign="top">static esp_err_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classrb_1_1WiFi.html#aa1517a47266d177a71b9b19f1849311c">scanAsync</a> (SemaphoreHandle_t *out_scan_done_event)</td></tr>
+<tr class="separator:aa1517a47266d177a71b9b19f1849311c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acafd0568c7b47b1b5b15d41fefaa39b9" id="r_acafd0568c7b47b1b5b15d41fefaa39b9"><td class="memItemLeft" align="right" valign="top">static std::vector&lt; wifi_ap_record_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classrb_1_1WiFi.html#acafd0568c7b47b1b5b15d41fefaa39b9">scanSync</a> (esp_err_t *err_out=NULL)</td></tr>
+<tr class="memdesc:acafd0568c7b47b1b5b15d41fefaa39b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connect to a wifi network with given ssid (name) and password.  <br /></td></tr>
+<tr class="separator:acafd0568c7b47b1b5b15d41fefaa39b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4c1647a23a22a9615c0c410647b6820f" id="r_a4c1647a23a22a9615c0c410647b6820f"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classrb_1_1WiFi.html#a4c1647a23a22a9615c0c410647b6820f">connect</a> (const char *ssid, const char *password)</td></tr>
-<tr class="memdesc:a4c1647a23a22a9615c0c410647b6820f"><td class="mdescLeft">&#160;</td><td class="mdescRight">&lt; Connect to a wifi network with given ssid (name) and password  <br /></td></tr>
+<tr class="memdesc:a4c1647a23a22a9615c0c410647b6820f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a wifi network with given ssid (name) and password.  <br /></td></tr>
 <tr class="separator:a4c1647a23a22a9615c0c410647b6820f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3d7324abf87549a6b2294e1424b5e5a3" id="r_a3d7324abf87549a6b2294e1424b5e5a3"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classrb_1_1WiFi.html#a3d7324abf87549a6b2294e1424b5e5a3">startAp</a> (const char *ssid, const char *password, uint8_t channel=6)</td></tr>
 <tr class="memdesc:a3d7324abf87549a6b2294e1424b5e5a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return current IP address of the ESP32.  <br /></td></tr>
@@ -145,8 +150,7 @@ Friends</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>&lt; Connect to a wifi network with given ssid (name) and password </p>
-<p>Create a wifi network with given ssid (name) and password </p>
+<p>Create a wifi network with given ssid (name) and password. </p>
 
 </div>
 </div>
@@ -199,6 +203,60 @@ Friends</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Blocks until IP is assigned. </p>
+
+</div>
+</div>
+<a id="aa1517a47266d177a71b9b19f1849311c" name="aa1517a47266d177a71b9b19f1849311c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa1517a47266d177a71b9b19f1849311c">&#9670;&#160;</a></span>scanAsync()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">esp_err_t rb::WiFi::scanAsync </td>
+          <td>(</td>
+          <td class="paramtype">SemaphoreHandle_t *&#160;</td>
+          <td class="paramname"><em>out_scan_done_event</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="acafd0568c7b47b1b5b15d41fefaa39b9" name="acafd0568c7b47b1b5b15d41fefaa39b9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acafd0568c7b47b1b5b15d41fefaa39b9">&#9670;&#160;</a></span>scanSync()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; wifi_ap_record_t &gt; rb::WiFi::scanSync </td>
+          <td>(</td>
+          <td class="paramtype">esp_err_t *&#160;</td>
+          <td class="paramname"><em>err_out</em> = <code>NULL</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Connect to a wifi network with given ssid (name) and password. </p>
 
 </div>
 </div>
@@ -302,7 +360,7 @@ Friends</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Apr 30 2024 15:20:49 for RBProtocol by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Apr 30 2024 18:14:21 for RBProtocol by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
