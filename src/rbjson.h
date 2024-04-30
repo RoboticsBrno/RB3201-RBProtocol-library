@@ -4,6 +4,7 @@
 #include <sstream>
 #include <vector>
 
+
 /**
  * \brief JSON-related objects
  */
@@ -63,6 +64,8 @@ class Array;
  */
 class Object : public Value {
 public:
+    typedef std::vector<std::pair<std::string, Value*>> container_t;
+
     static Object* parse(char* buf, size_t size);
 
     Object();
@@ -75,7 +78,7 @@ public:
     void swapData(Object& other);
 
     bool contains(const std::string& key) const;
-    const std::map<std::string, Value*>& members() const { return m_members; }
+    const container_t& members() const { return m_members; }
 
     Value* get(const std::string& key) const;
     Object* getObject(const std::string& key) const;
@@ -92,7 +95,10 @@ public:
     void remove(const std::string& key);
 
 private:
-    std::map<std::string, Value*> m_members;
+    container_t::const_iterator lower_bound_const(const std::string& key) const;
+    container_t::iterator lower_bound(const std::string& key);
+
+    container_t m_members;
 };
 
 /**
