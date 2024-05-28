@@ -22,9 +22,7 @@
 
 #define TAG "RbWebServer"
 
-#define WORKING_DIRECTORY "/spiffs"
-
-#define EXTRA_DIRECTORY WORKING_DIRECTORY "/extra/"
+#define EXTRA_DIRECTORY_SUFFIX "/extra/"
 
 typedef struct {
     int rio_fd; /* descriptor for this buf */
@@ -56,11 +54,17 @@ static const mime_map meme_types[] = {
 static const char* default_mime_type = "text/plain";
 
 static void (*extra_path_callback)(const char *path, int out_fd) = NULL;
+static not_found_response_t (*not_found_callback)(const char* request_path) = NULL;
 
 static void *ws_protocol = NULL;
+static const char *working_directory = "/notset";
 
 void rb_web_set_extra_callback(void (*callback)(const char *path, int out_fd)) {
     extra_path_callback = callback;
+}
+
+void rb_web_set_not_found_callback(not_found_response_t (*callback)(const char* request_path)) {
+    not_found_callback = callback;
 }
 
 void rb_web_set_wsprotocol(void *wsProtocolInstance) {
@@ -208,7 +212,7 @@ static int open_listenfd(int port) {
 static void url_decode(char* src, char* dest, int max) {
     char* p = src;
 
-    int prefix_len = snprintf(dest, FILENAME_SIZE, "%s/", WORKING_DIRECTORY);
+    int prefix_len = snprintf(dest, FILENAME_SIZE, "%s/", working_directory);
     dest += prefix_len;
     max -= prefix_len;
 
@@ -406,8 +410,7 @@ static ssize_t sendfile(char* buf, const size_t bufsize, int out_fd, int in_fd, 
     return res;
 }
 
-static void serve_static(int out_fd, int in_fd, http_request* req,
-    size_t total_size) {
+static void serve_headers_success(int out_fd, http_request* req, size_t total_size) {
     char buf[256];
     int buf_len = 0;
     if (req->offset > 0) {
@@ -432,6 +435,15 @@ static void serve_static(int out_fd, int in_fd, http_request* req,
     buf_len += snprintf(buf + buf_len, sizeof(buf) - buf_len - 1, "Content-Type: %s\r\n\r\n", get_mime_type(req->filename));
 
     writen(out_fd, buf, strlen(buf));
+}
+
+static void serve_static(int out_fd, int in_fd, http_request* req,
+    size_t total_size) {
+
+    serve_headers_success(out_fd, req, total_size);
+
+    char buf[256];
+
     off_t offset = req->offset; /* copy */
     while (offset < req->end) {
         if (sendfile(buf, sizeof(buf), out_fd, in_fd, &offset, req->end - req->offset) <= 0) {
@@ -444,13 +456,47 @@ static void serve_static(int out_fd, int in_fd, http_request* req,
 
 }
 
+static int serve_not_found_cb(int out_fd, http_request *req) {
+    if(!not_found_callback) {
+        return 0;
+    }
+
+    not_found_response_t nfr = not_found_callback(req->filename + strlen(working_directory));
+    if(!nfr.data || !nfr.size) {
+        return 0;
+    }
+
+    req->servingGzip = nfr.is_gzipped ? 1 : 0;
+    if (req->end == 0 || req->end > nfr.size) {
+        req->end = nfr.size;
+    }
+
+    serve_headers_success(out_fd, req, nfr.size);
+
+    if (req->offset >= nfr.size) {
+        return 1;
+    }
+
+    off_t pos = req->offset;
+    while(pos < req->end) {
+        size_t chunk = req->end - pos;
+        if(chunk > 512) chunk = 512;
+        writen(out_fd, nfr.data + pos, chunk);
+        pos += chunk;
+    }
+
+    return 1;
+}
+
 static void process_serve_file(int fd, struct sockaddr_in* clientaddr, http_request *req) {
     struct stat sbuf;
     int status = 200;
     int ffd = prepare_gzip(req);
     if (ffd <= 0) {
-        status = 404;
-        client_error(fd, status, "Not found", "File not found");
+        if(!serve_not_found_cb(fd, req)) {
+            status = 404;
+            client_error(fd, status, "Not found", "File not found");
+        }
     } else {
         fstat(ffd, &sbuf);
         if (S_ISREG(sbuf.st_mode)) {
@@ -476,6 +522,8 @@ static int process(int fd, struct sockaddr_in* clientaddr) {
 
     parse_request(fd, &req);
 
+    char *extra_itr;
+
     if(req.non_local_hostname) {
         temporary_redirect(fd, rb_dn_get_local_hostname());
         return 0;
@@ -489,13 +537,14 @@ static int process(int fd, struct sockaddr_in* clientaddr) {
             return 1;
         }
         return 0;
-    } else if(strncmp(req.filename, EXTRA_DIRECTORY, sizeof(EXTRA_DIRECTORY)-1) == 0) {
+    } else if((extra_itr = strstr(req.filename, EXTRA_DIRECTORY_SUFFIX)) != NULL &&
+        (extra_itr - req.filename) == strlen(working_directory)) {
         if(extra_path_callback == NULL) {
             client_error(fd, 400, "Error", "No extra_path_callback specified.");
             return 0;
         }
 
-        extra_path_callback(req.filename + sizeof(EXTRA_DIRECTORY)-1, fd);
+        extra_path_callback(extra_itr + sizeof(EXTRA_DIRECTORY_SUFFIX)-1, fd);
         close(fd);
         return 0;
     } else {
@@ -556,7 +605,7 @@ exit:
 TaskHandle_t rb_web_start(int port) {
     if(!esp_spiffs_mounted(NULL)) {
         esp_vfs_spiffs_conf_t conf = {
-            .base_path = WORKING_DIRECTORY,
+            .base_path = "/data",
             .partition_label = NULL,
             .max_files = 5,
             .format_if_mount_failed = true
@@ -575,7 +624,12 @@ TaskHandle_t rb_web_start(int port) {
         }
     }
 
+    return rb_web_start_no_spiffs(port, "/data");
+}
+
+TaskHandle_t rb_web_start_no_spiffs(int port, const char *working_directory_path) {
     TaskHandle_t task;
+    working_directory = working_directory_path;
     xTaskCreate(&tiny_web_task, "rbctrl_web", 3072, (void*)port, 2, &task);
     return task;
 }
@@ -583,6 +637,10 @@ TaskHandle_t rb_web_start(int port) {
 void rb_web_stop(TaskHandle_t web_task) {
     xTaskNotify(web_task, (uint32_t)xTaskGetCurrentTaskHandle(), eSetValueWithOverwrite);
     xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
+
+    working_directory = "/notset";
+    extra_path_callback = NULL;
+    not_found_callback = NULL;
 }
 
 esp_err_t rb_web_add_file(const char* filename, const char* data, size_t len) {
@@ -590,7 +648,7 @@ esp_err_t rb_web_add_file(const char* filename, const char* data, size_t len) {
     int fd;
     esp_err_t res = ESP_OK;
 
-    snprintf(buf, sizeof(buf), "%s/%s", WORKING_DIRECTORY, filename);
+    snprintf(buf, sizeof(buf), "%s/%s", working_directory, filename);
 
     fd = open(buf, O_WRONLY | O_CREAT | O_TRUNC);
     if (fd < 0) {
@@ -606,5 +664,5 @@ esp_err_t rb_web_add_file(const char* filename, const char* data, size_t len) {
 }
 
 const char *rb_web_get_files_root(void) {
-    return WORKING_DIRECTORY;
+    return working_directory;
 }
