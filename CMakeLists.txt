@@ -18,5 +18,5 @@ set(SRCS
 idf_component_register(
     SRCS ${SRCS}
     INCLUDE_DIRS "./src"
-    REQUIRES nvs_flash lwip spiffs esp_netif esp_event
+    REQUIRES nvs_flash lwip spiffs esp_netif esp_event esp_wifi
 )
