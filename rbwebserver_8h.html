@@ -71,6 +71,7 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">rbwebserver.h File Reference</div></div>
 </div><!--header-->
@@ -81,11 +82,19 @@ $(function() {
 </div>
 <p><a href="rbwebserver_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structnot__found__response__t.html">not_found_response_t</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:aef42fd193c622075b8aa02218a974a91" id="r_aef42fd193c622075b8aa02218a974a91"><td class="memItemLeft" align="right" valign="top">TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="rbwebserver_8h.html#aef42fd193c622075b8aa02218a974a91">rb_web_start</a> (int port)</td></tr>
 <tr class="memdesc:aef42fd193c622075b8aa02218a974a91"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start serving files from SPIFFS on http on port.  <br /></td></tr>
 <tr class="separator:aef42fd193c622075b8aa02218a974a91"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a88b7953e291fb5227061d534448454a4" id="r_a88b7953e291fb5227061d534448454a4"><td class="memItemLeft" align="right" valign="top">TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="rbwebserver_8h.html#a88b7953e291fb5227061d534448454a4">rb_web_start_no_spiffs</a> (int port, const char *working_directory_path)</td></tr>
+<tr class="memdesc:a88b7953e291fb5227061d534448454a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start serving files without mounting the spiffs.  <br /></td></tr>
+<tr class="separator:a88b7953e291fb5227061d534448454a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0af5a0b343886ac6a1595f923f1e5edb" id="r_a0af5a0b343886ac6a1595f923f1e5edb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="rbwebserver_8h.html#a0af5a0b343886ac6a1595f923f1e5edb">rb_web_stop</a> (TaskHandle_t web_task)</td></tr>
 <tr class="memdesc:a0af5a0b343886ac6a1595f923f1e5edb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop http server. Pass in the task handle returned by rb_web_start.  <br /></td></tr>
 <tr class="separator:a0af5a0b343886ac6a1595f923f1e5edb"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -97,6 +106,8 @@ Functions</h2></td></tr>
 <tr class="separator:a37501ace5b7995938f85b49421f44c7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a40594b2ef942441de26a0dfcb2f4919e" id="r_a40594b2ef942441de26a0dfcb2f4919e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="rbwebserver_8h.html#a40594b2ef942441de26a0dfcb2f4919e">rb_web_set_extra_callback</a> (void(*callback)(const char *request_path, int out_fd))</td></tr>
 <tr class="separator:a40594b2ef942441de26a0dfcb2f4919e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afd2025aa8d0dfb487239c2a511d7e668" id="r_afd2025aa8d0dfb487239c2a511d7e668"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="rbwebserver_8h.html#afd2025aa8d0dfb487239c2a511d7e668">rb_web_set_not_found_callback</a> (<a class="el" href="structnot__found__response__t.html">not_found_response_t</a>(*callback)(const char *request_path))</td></tr>
+<tr class="separator:afd2025aa8d0dfb487239c2a511d7e668"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
 <a id="ae4358510ea1be5ecac08f5b4f0f5d081" name="ae4358510ea1be5ecac08f5b4f0f5d081"></a>
@@ -174,6 +185,25 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="afd2025aa8d0dfb487239c2a511d7e668" name="afd2025aa8d0dfb487239c2a511d7e668"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afd2025aa8d0dfb487239c2a511d7e668">&#9670;&#160;</a></span>rb_web_set_not_found_callback()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void rb_web_set_not_found_callback </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structnot__found__response__t.html">not_found_response_t</a>(*)(const char *request_path)&#160;</td>
+          <td class="paramname"><em>callback</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Set a callback to call whenever a 404 would have been returned. Return zero-filled <a class="el" href="structnot__found__response__t.html">not_found_response_t</a> to continue with 404, otherwise fill in the fields. </p>
+
+</div>
+</div>
 <a id="aef42fd193c622075b8aa02218a974a91" name="aef42fd193c622075b8aa02218a974a91"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aef42fd193c622075b8aa02218a974a91">&#9670;&#160;</a></span>rb_web_start()</h2>
 
@@ -191,6 +221,36 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Start serving files from SPIFFS on http on port. </p>
+
+</div>
+</div>
+<a id="a88b7953e291fb5227061d534448454a4" name="a88b7953e291fb5227061d534448454a4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a88b7953e291fb5227061d534448454a4">&#9670;&#160;</a></span>rb_web_start_no_spiffs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">TaskHandle_t rb_web_start_no_spiffs </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>port</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>working_directory_path</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Start serving files without mounting the spiffs. </p>
 
 </div>
 </div>
@@ -217,7 +277,7 @@ Functions</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue May 28 2024 15:52:54 for RBProtocol by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Jun 25 2024 15:20:57 for RBProtocol by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
