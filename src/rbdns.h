@@ -4,6 +4,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
+#include <functional>
 #include <mutex>
 #include <vector>
 
@@ -15,7 +16,7 @@ class DnsServer {
 public:
     static DnsServer& get();
 
-    void start(const char* local_hostname = "esp32.local");
+    void start(const char* local_hostname = "esp32.local", std::function<uint32_t()> get_local_ip = nullptr);
     void stop();
 
     const std::string& getLocalHostname() const {
@@ -33,7 +34,7 @@ private:
 
     static void taskBody(void*);
 
-    std::mutex m_mutex;
+    std::function<uint32_t()> m_get_local_ip;
     std::string m_local_hostname;
     int m_socket;
     TaskHandle_t m_task;
