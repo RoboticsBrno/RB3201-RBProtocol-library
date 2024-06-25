@@ -1,11 +1,11 @@
 #include "lwip/err.h"
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
-#include <esp_netif.h>
 #include <esp_log.h>
 #include <cstring>
 
 #include "rbdns.h"
+#include "rbwifi.h"
 
 #define TAG "RbDns"
 
@@ -54,14 +54,18 @@ DnsServer::DnsServer()
 DnsServer::~DnsServer() {
 }
 
-void DnsServer::start(const char* local_hostname) {
-    const std::lock_guard<std::mutex> l(m_mutex);
+void DnsServer::start(const char* local_hostname, std::function<uint32_t()> get_local_ip) {
     if (m_task != nullptr) {
         ESP_LOGE(TAG, "DnsServer::start called when it was already started, doing nothing.");
         return;
     }
 
     m_local_hostname = local_hostname;
+    m_get_local_ip = get_local_ip;
+
+    if(!m_get_local_ip) {
+        m_get_local_ip = &rb::WiFi::getIp;
+    }
 
     m_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (m_socket == -1) {
@@ -82,11 +86,10 @@ void DnsServer::start(const char* local_hostname) {
         return;
     }
 
-    xTaskCreate(DnsServer::taskBody, "rbdns", 3072, NULL, 2, &m_task);
+    xTaskCreate(DnsServer::taskBody, "rbdns", LOG_LOCAL_LEVEL >= ESP_LOG_DEBUG ? 3072 : 2048, NULL, 2, &m_task);
 }
 
 void DnsServer::stop() {
-    const std::lock_guard<std::mutex> l(m_mutex);
     if (m_task == nullptr) {
         ESP_LOGE(TAG, "DnsServer::stop called when it was not started, doing nothing.");
         return;
@@ -203,14 +206,7 @@ ssize_t DnsServer::processDnsQuestion(std::vector<uint8_t>& buff, ssize_t req_si
     uint8_t* cur_question_ptr = buff.data() + sizeof(dns_header_t);
     uint8_t* cur_ans_ptr = req_end;
 
-    uint32_t cur_esp_ip = 0;
-    auto *netif = esp_netif_get_default_netif();
-    if(netif) {
-        esp_netif_ip_info_t ip_info;
-        if(esp_netif_get_ip_info(netif, &ip_info) == ESP_OK) {
-            cur_esp_ip = ip_info.ip.addr;
-        }
-    }
+    const uint32_t cur_esp_ip = m_get_local_ip();
 
     std::string hostname;
     for (uint16_t question_idx = 0; question_idx < question_count; ++question_idx) {
