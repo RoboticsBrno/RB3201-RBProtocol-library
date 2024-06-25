@@ -1,10 +1,9 @@
 #include "lwip/err.h"
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
+#include <esp_netif.h>
 #include <esp_log.h>
 #include <cstring>
-
-#include "rbwifi.h"
 
 #include "rbdns.h"
 
@@ -204,7 +203,14 @@ ssize_t DnsServer::processDnsQuestion(std::vector<uint8_t>& buff, ssize_t req_si
     uint8_t* cur_question_ptr = buff.data() + sizeof(dns_header_t);
     uint8_t* cur_ans_ptr = req_end;
 
-    const auto cur_esp_ip = WiFi::getIp();
+    uint32_t cur_esp_ip = 0;
+    auto *netif = esp_netif_get_default_netif();
+    if(netif) {
+        esp_netif_ip_info_t ip_info;
+        if(esp_netif_get_ip_info(netif, &ip_info) == ESP_OK) {
+            cur_esp_ip = ip_info.ip.addr;
+        }
+    }
 
     std::string hostname;
     for (uint16_t question_idx = 0; question_idx < question_count; ++question_idx) {
@@ -262,7 +268,6 @@ ssize_t DnsServer::processDnsQuestion(std::vector<uint8_t>& buff, ssize_t req_si
 
 void DnsServer::taskBody(void*) {
     auto& self = get();
-
 
     struct sockaddr_in addr;
     socklen_t addr_len = sizeof(struct sockaddr_in);
