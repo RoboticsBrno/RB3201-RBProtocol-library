@@ -480,7 +480,7 @@ static int serve_not_found_cb(int out_fd, http_request *req) {
     off_t pos = req->offset;
     while(pos < req->end) {
         size_t chunk = req->end - pos;
-        if(chunk > 512) chunk = 512;
+        if(chunk > 256) chunk = 256;
         writen(out_fd, nfr.data + pos, chunk);
         pos += chunk;
     }
@@ -577,6 +577,12 @@ static void tiny_web_task(void* portPtr) {
 
     while (xTaskNotifyWait(0, 0xFFFFFFFF, (uint32_t*)&stopping_task, pdMS_TO_TICKS(10)) == pdFALSE) {
         connfd = accept(listenfd, (SA*)&clientaddr, &clientlen);
+
+        // 5s timeout on writes
+        struct timeval timeout;
+        timeout.tv_sec = 5;
+        timeout.tv_usec = 0;
+        setsockopt(connfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
 
         if (connfd >= 0) {
             if(process(connfd, &clientaddr) <= 0) {
