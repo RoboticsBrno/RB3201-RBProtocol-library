@@ -7,6 +7,7 @@
 #include <functional>
 #include <mutex>
 #include <vector>
+#include <string>
 
 struct sockaddr_in;
 
