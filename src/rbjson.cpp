@@ -200,16 +200,17 @@ Object::Object()
 
 Object::~Object() {
     for (auto itr = m_members.begin(); itr != m_members.end(); ++itr) {
-        delete itr->second;
+        delete itr->value;
+        free(itr->name);
     }
 }
 
 void Object::serialize(std::ostream& ss) const {
     ss.put('{');
     for (auto itr = m_members.cbegin(); itr != m_members.cend();) {
-        write_string_escaped(itr->first.c_str(), ss);
+        write_string_escaped(itr->name, ss);
         ss.put(':');
-        itr->second->serialize(ss);
+        itr->value->serialize(ss);
         if (++itr != m_members.cend()) {
             ss.put(',');
         }
@@ -219,6 +220,25 @@ void Object::serialize(std::ostream& ss) const {
 
 void Object::swapData(Object& other) {
     m_members.swap(other.m_members);
+}
+
+bool Object::keyLess(const MemberItem& member, const std::string& key) {
+    return strncmp(member.name, key.c_str(), std::min(size_t(254), key.length())) < 0;
+}
+
+bool Object::keyEqualStr(const MemberItem& a, const std::string& key) {
+    const uint8_t key_len = std::min(size_t(254), key.length());
+    if(a.name_len != key_len) {
+        return false;
+    }
+    return memcmp(a.name, key.c_str(), a.name_len) == 0; 
+}
+
+bool Object::keyEqual(const MemberItem& a, const MemberItem& b) {
+    if(a.name_len != b.name_len) {
+        return false;
+    }
+    return memcmp(a.name, b.name, a.name_len) == 0; 
 }
 
 bool Object::equals(const Value& other) const {
@@ -234,7 +254,7 @@ bool Object::equals(const Value& other) const {
     auto itr_a = m_members.cbegin();
     auto itr_b = obj.m_members.cbegin();
     for(size_t i = 0; i < size; ++i) {
-        if(itr_a->first != itr_b->first || !itr_a->second->equals(*itr_b->second))
+        if(!keyEqual(*itr_a, *itr_b) || !itr_a->value->equals(*itr_b->value))
             return false;
         ++itr_a;
         ++itr_b;
@@ -245,34 +265,36 @@ bool Object::equals(const Value& other) const {
 
 Value* Object::copy() const {
     auto* res = new Object();
+    res->m_members.reserve(m_members.size());
     for (const auto& pair : m_members) {
-        res->m_members.emplace_back(std::make_pair(pair.first, pair.second->copy()));
+        res->m_members.emplace_back(MemberItem{
+            .value = pair.value->copy(),
+            .name = strdup(pair.name),
+            .name_len = pair.name_len,
+        });
     }
+    res->m_members.shrink_to_fit();
     return res;
 }
 
 Object::container_t::const_iterator Object::lower_bound_const(const std::string& key) const {
-    return std::lower_bound(m_members.cbegin(), m_members.cend(), key, [] (const auto& itr, const std::string& key) {
-        return itr.first < key;
-    });
+    return std::lower_bound(m_members.cbegin(), m_members.cend(), key, keyLess);
 }
 
 Object::container_t::iterator Object::lower_bound(const std::string& key) {
-    return std::lower_bound(m_members.begin(), m_members.end(), key, [] (const auto& itr, const std::string& key) {
-        return itr.first < key;
-    });
+    return std::lower_bound(m_members.begin(), m_members.end(), key, keyLess);
 }
 
 bool Object::contains(const std::string& key) const {
     const auto lower = lower_bound_const(key);
-    return lower != m_members.end() && lower->first == key;
+    return lower != m_members.end() && keyEqualStr(*lower, key);
 }
 
 Value* Object::get(const std::string& key) const {
     const auto lower = lower_bound_const(key);
-    if (lower == m_members.end() || lower->first != key)
+    if (lower == m_members.end() || !keyEqualStr(*lower, key))
         return NULL;
-    return lower->second;
+    return lower->value;
 }
 
 Object* Object::getObject(const std::string& key) const {
@@ -329,11 +351,20 @@ bool Object::getBool(const std::string& key, bool def) const {
 
 void Object::set(const std::string& key, Value* value) {
     auto lower = lower_bound(key);
-    if (lower != m_members.end() && lower->first == key) {
-        delete lower->second;
-        lower->second = value;
+    if (lower != m_members.end() && keyEqualStr(*lower, key)) {
+        delete lower->value;
+        lower->value = value;
     } else {
-        m_members.emplace(lower, std::make_pair(key, value));
+        uint8_t name_len = std::min(size_t(254), key.length());
+        auto *name = (char*)malloc(name_len + 1);
+        memcpy(name, key.c_str(), name_len);
+        name[name_len] = 0;
+
+        m_members.emplace(lower, MemberItem{
+            .value = value,
+            .name = name,
+            .name_len = name_len,
+        });
     }
 }
 
@@ -347,8 +378,9 @@ void Object::set(const std::string& key, double number) {
 
 void Object::remove(const std::string& key) {
     const auto lower = lower_bound_const(key);
-    if (lower != m_members.end() && lower->first == key) {
-        delete lower->second;
+    if (lower != m_members.end() && keyEqualStr(*lower, key)) {
+        delete lower->value;
+        free(lower->name);
         m_members.erase(lower);
     }
 }

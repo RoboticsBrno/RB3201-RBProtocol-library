@@ -64,7 +64,13 @@ class Array;
  */
 class Object : public Value {
 public:
-    typedef std::vector<std::pair<std::string, Value*>> container_t;
+    struct __attribute__ ((packed)) MemberItem {
+        Value *value;
+        char *name;
+        uint8_t name_len;
+    };
+
+    typedef std::vector<MemberItem> container_t;
 
     static Object* parse(char* buf, size_t size);
 
@@ -94,7 +100,15 @@ public:
 
     void remove(const std::string& key);
 
+    void shrink_to_fit() {
+        m_members.shrink_to_fit();
+    }
+
 private:
+    static bool keyLess(const MemberItem& member, const std::string& key);
+    static bool keyEqualStr(const MemberItem& a, const std::string& key);
+    static bool keyEqual(const MemberItem& a, const MemberItem& b);
+
     container_t::const_iterator lower_bound_const(const std::string& key) const;
     container_t::iterator lower_bound(const std::string& key);
 
@@ -129,6 +143,10 @@ public:
         insert(m_items.size(), value);
     }
     void remove(size_t idx);
+
+    void shrink_to_fit() {
+        m_items.shrink_to_fit();
+    }
 
 private:
     std::vector<Value*> m_items;
