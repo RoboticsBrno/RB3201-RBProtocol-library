@@ -1,8 +1,8 @@
 #include "lwip/err.h"
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
-#include <esp_log.h>
 #include <cstring>
+#include <esp_log.h>
 
 #include "rbdns.h"
 #include "rbwifi.h"
@@ -63,7 +63,7 @@ void DnsServer::start(const char* local_hostname, std::function<uint32_t()> get_
     m_local_hostname = local_hostname;
     m_get_local_ip = get_local_ip;
 
-    if(!m_get_local_ip) {
+    if (!m_get_local_ip) {
         m_get_local_ip = &rb::WiFi::getIp;
     }
 
@@ -120,7 +120,7 @@ ssize_t DnsServer::receivePacket(std::vector<uint8_t>& buff, struct sockaddr_in*
             return -1;
         }
 
-        if (msg_size < buff.size() || msg_size > DNS_MSG_SIZE_LIMIT)
+        if (msg_size <= buff.size() || msg_size > DNS_MSG_SIZE_LIMIT)
             break;
         buff.resize(msg_size);
     }
