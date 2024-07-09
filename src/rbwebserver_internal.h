@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-#define LISTENQ 8 /* second argument to listen() */
+#define LISTENQ 2 /* second argument to listen() */
 #define MAXLINE 256 /* max length of a line */
 #define RIO_BUFSIZE 256
 #define FILENAME_SIZE 64

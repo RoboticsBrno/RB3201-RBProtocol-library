@@ -16,9 +16,11 @@
 #include "esp_spiffs.h"
 #include "freertos/task.h"
 
+#include "rbdns.h"
 #include "rbwebserver.h"
 #include "rbwebserver_internal.h"
-#include "rbdns.h"
+
+#include "mpaland-printf/printf.h"
 
 #define TAG "RbWebServer"
 
@@ -53,13 +55,14 @@ static const mime_map meme_types[] = {
 
 static const char* default_mime_type = "text/plain";
 
-static void (*extra_path_callback)(const char *path, int out_fd) = NULL;
+static void (*extra_path_callback)(const char* path, int out_fd) = NULL;
 static not_found_response_t (*not_found_callback)(const char* request_path) = NULL;
 
-static void *ws_protocol = NULL;
-static const char *working_directory = "/notset";
+static void* ws_protocol = NULL;
+static const char* working_directory = "/notset";
+static uint16_t web_server_stack_size = 3584;
 
-void rb_web_set_extra_callback(void (*callback)(const char *path, int out_fd)) {
+void rb_web_set_extra_callback(void (*callback)(const char* path, int out_fd)) {
     extra_path_callback = callback;
 }
 
@@ -67,15 +70,15 @@ void rb_web_set_not_found_callback(not_found_response_t (*callback)(const char* 
     not_found_callback = callback;
 }
 
-void rb_web_set_wsprotocol(void *wsProtocolInstance) {
-    if(ws_protocol != NULL && ws_protocol != wsProtocolInstance) {
+void rb_web_set_wsprotocol(void* wsProtocolInstance) {
+    if (ws_protocol != NULL && ws_protocol != wsProtocolInstance) {
         ESP_LOGE(TAG, "rb_web_set_wsprotocol was called twice with different instances!");
     }
     ws_protocol = wsProtocolInstance;
 }
 
-void rb_web_clear_wsprotocol(void *wsProtocolInstance) {
-    if(ws_protocol == wsProtocolInstance) {
+void rb_web_clear_wsprotocol(void* wsProtocolInstance) {
+    if (ws_protocol == wsProtocolInstance) {
         ws_protocol = NULL;
     } else {
         ESP_LOGE(TAG, "rb_web_clear_wsprotocol was called twice with different instance than rb_web_set_wsprotocol!");
@@ -122,7 +125,7 @@ static ssize_t rio_read(rio_t* rp, char* usrbuf, size_t n) {
         rp->rio_cnt = recv(rp->rio_fd, rp->rio_buf,
             sizeof(rp->rio_buf), MSG_DONTWAIT);
         if (rp->rio_cnt < 0) {
-            if(errno == EAGAIN) {
+            if (errno == EAGAIN) {
                 vTaskDelay(pdMS_TO_TICKS(10));
             } else if (errno != EINTR) /* interrupted by sig handler return */
                 return -1;
@@ -255,32 +258,32 @@ nogzip:
     return open(req->filename, O_RDONLY);
 }
 
-static int is_local_host(const char *hostHeader) {
+static int is_local_host(const char* hostHeader) {
     const int hostHeaderLen = strlen(hostHeader) - 2; // ignore \r\n
-    if(hostHeaderLen < 0) {
+    if (hostHeaderLen < 0) {
         return true;
     }
 
-    if(hostHeaderLen >= 7 && hostHeaderLen <= 15) {
+    if (hostHeaderLen >= 7 && hostHeaderLen <= 15) {
         int dots = 0;
         bool is_ip = true;
-        for(int i = 0; i < hostHeaderLen; ++i) {
+        for (int i = 0; i < hostHeaderLen; ++i) {
             char c = hostHeader[i];
-            if(c == '.') {
+            if (c == '.') {
                 ++dots;
-            } else if(c < '0' || c > '9') {
+            } else if (c < '0' || c > '9') {
                 is_ip = false;
                 break;
             }
         }
 
-        if(is_ip && dots == 3) {
+        if (is_ip && dots == 3) {
             return true;
         }
     }
 
-    const char *localHostname = rb_dn_get_local_hostname();
-    if(strlen(localHostname) == hostHeaderLen && memcmp(localHostname, hostHeader, hostHeaderLen) == 0) {
+    const char* localHostname = rb_dn_get_local_hostname();
+    if (strlen(localHostname) == hostHeaderLen && memcmp(localHostname, hostHeader, hostHeaderLen) == 0) {
         return true;
     }
     return false;
@@ -288,7 +291,9 @@ static int is_local_host(const char *hostHeader) {
 
 static void parse_request(int fd, http_request* req) {
     rio_t rio;
-    char buf[MAXLINE], method[10], uri[MAXLINE];
+    char buf[MAXLINE];
+    char uri[128];
+    char method[10];
 
     uint8_t websocket_upgrade_headers = 0;
 
@@ -300,7 +305,7 @@ static void parse_request(int fd, http_request* req) {
     rio_readinitb(&rio, fd);
     rio_readlineb(&rio, buf, MAXLINE);
 
-    sscanf(buf, "%9s %255s", method, uri); /* version is not cared */
+    sscanf(buf, "%9s %127s", method, uri); /* version is not cared */
     /* read all */
     while (buf[0] != '\n' && buf[1] != '\n') { /* \n || \r\n */
         rio_readlineb(&rio, buf, MAXLINE);
@@ -311,24 +316,24 @@ static void parse_request(int fd, http_request* req) {
                 req->end++;
         } else if (strstr(buf, "Accept-Encoding: ") == buf && strstr(buf + 17, "gzip")) {
             req->servingGzip = 1;
-        } else if(strstr(buf, "Upgrade: websocket") == buf) {
+        } else if (strstr(buf, "Upgrade: websocket") == buf) {
             ++websocket_upgrade_headers;
-        } else if(strstr(buf, "Connection: ") == buf && strstr(buf+12, "Upgrade")) {
+        } else if (strstr(buf, "Connection: ") == buf && strstr(buf + 12, "Upgrade")) {
             ++websocket_upgrade_headers;
         }
         //      len(Sec-WebSocket-Key: ) + len(key) + \r\n
-        else if(strlen(buf) == 19 + 24 + 2 && strstr(buf, "Sec-WebSocket-Key: ") == buf) {
+        else if (strlen(buf) == 19 + 24 + 2 && strstr(buf, "Sec-WebSocket-Key: ") == buf) {
             ++websocket_upgrade_headers;
             memcpy(req->ws_key, buf + 19, 24);
-        } else if(strstr(buf, "Sec-WebSocket-Version: ") == buf) {
+        } else if (strstr(buf, "Sec-WebSocket-Version: ") == buf) {
             sscanf(buf + 23, "%ld", &req->ws_version);
-        } else if(strncmp(buf, "Host: ", 6) == 0) {
-            req->non_local_hostname = !is_local_host(buf+6);
+        } else if (strncmp(buf, "Host: ", 6) == 0) {
+            req->non_local_hostname = !is_local_host(buf + 6);
         }
     }
 
     // Zero out the version if not all headers were received
-    if(req->ws_version != 0 && (websocket_upgrade_headers != 3 || strcmp(method, "GET") != 0)) {
+    if (req->ws_version != 0 && (websocket_upgrade_headers != 3 || strcmp(method, "GET") != 0)) {
         req->ws_version = 0;
     }
 
@@ -369,16 +374,15 @@ void client_error(int fd, int status, const char* msg, const char* longmsg) {
     writen(fd, buf, strlen(buf));
 }
 
-#define REDIRECT_RESPONSE \
-    "HTTP/1.1 302 Temporary Redirect\r\n"\
+#define REDIRECT_RESPONSE                 \
+    "HTTP/1.1 302 Temporary Redirect\r\n" \
     "Location: http://"
 
-static void temporary_redirect(int fd, const char *location) {
-    writen(fd, REDIRECT_RESPONSE, sizeof(REDIRECT_RESPONSE)-1);
+static void temporary_redirect(int fd, const char* location) {
+    writen(fd, REDIRECT_RESPONSE, sizeof(REDIRECT_RESPONSE) - 1);
     writen(fd, location, strlen(location));
     writen(fd, "\r\n\r\n", 4);
 }
-
 
 static ssize_t sendfile(char* buf, const size_t bufsize, int out_fd, int in_fd, off_t* offset, size_t count) {
     size_t chunk;
@@ -453,16 +457,15 @@ static void serve_static(int out_fd, int in_fd, http_request* req,
         close(out_fd);
         break;
     }
-
 }
 
-static int serve_not_found_cb(int out_fd, http_request *req) {
-    if(!not_found_callback) {
+static int serve_not_found_cb(int out_fd, http_request* req) {
+    if (!not_found_callback) {
         return 0;
     }
 
     not_found_response_t nfr = not_found_callback(req->filename + strlen(working_directory));
-    if(!nfr.data || !nfr.size) {
+    if (!nfr.data || !nfr.size) {
         return 0;
     }
 
@@ -478,9 +481,10 @@ static int serve_not_found_cb(int out_fd, http_request *req) {
     }
 
     off_t pos = req->offset;
-    while(pos < req->end) {
+    while (pos < req->end) {
         size_t chunk = req->end - pos;
-        if(chunk > 256) chunk = 256;
+        if (chunk > 256)
+            chunk = 256;
         writen(out_fd, nfr.data + pos, chunk);
         pos += chunk;
     }
@@ -488,12 +492,12 @@ static int serve_not_found_cb(int out_fd, http_request *req) {
     return 1;
 }
 
-static void process_serve_file(int fd, struct sockaddr_in* clientaddr, http_request *req) {
+static void process_serve_file(int fd, struct sockaddr_in* clientaddr, http_request* req) {
     struct stat sbuf;
     int status = 200;
     int ffd = prepare_gzip(req);
     if (ffd <= 0) {
-        if(!serve_not_found_cb(fd, req)) {
+        if (!serve_not_found_cb(fd, req)) {
             status = 404;
             client_error(fd, status, "Not found", "File not found");
         }
@@ -522,29 +526,28 @@ static int process(int fd, struct sockaddr_in* clientaddr) {
 
     parse_request(fd, &req);
 
-    char *extra_itr;
+    char* extra_itr;
 
-    if(req.non_local_hostname) {
+    if (req.non_local_hostname) {
         temporary_redirect(fd, rb_dn_get_local_hostname());
         return 0;
-    } else if(req.ws_version != 0) {
-        if(ws_protocol == NULL) {
+    } else if (req.ws_version != 0) {
+        if (ws_protocol == NULL) {
             client_error(fd, 400, "WS not enabled", "");
             return 0;
         }
 
-        if(rb_web_handle_websocket_switch_request(fd, &req) == 0) {
+        if (rb_web_handle_websocket_switch_request(fd, &req) == 0) {
             return 1;
         }
         return 0;
-    } else if((extra_itr = strstr(req.filename, EXTRA_DIRECTORY_SUFFIX)) != NULL &&
-        (extra_itr - req.filename) == strlen(working_directory)) {
-        if(extra_path_callback == NULL) {
+    } else if ((extra_itr = strstr(req.filename, EXTRA_DIRECTORY_SUFFIX)) != NULL && (extra_itr - req.filename) == strlen(working_directory)) {
+        if (extra_path_callback == NULL) {
             client_error(fd, 400, "Error", "No extra_path_callback specified.");
             return 0;
         }
 
-        extra_path_callback(extra_itr + sizeof(EXTRA_DIRECTORY_SUFFIX)-1, fd);
+        extra_path_callback(extra_itr + sizeof(EXTRA_DIRECTORY_SUFFIX) - 1, fd);
         close(fd);
         return 0;
     } else {
@@ -558,12 +561,12 @@ static void tiny_web_task(void* portPtr) {
 
     struct sockaddr_in clientaddr;
     int listenfd, connfd;
-    socklen_t clientlen = sizeof clientaddr;
+    socklen_t clientlen = sizeof(clientaddr);
     TaskHandle_t stopping_task = NULL;
 
     listenfd = open_listenfd(port);
     if (listenfd > 0) {
-        ESP_LOGI(TAG, "Listening on port %d", port);
+        ESP_LOGD(TAG, "Listening on port %d %d", port, listenfd);
     } else {
         ESP_LOGE(TAG, "failed to start: %s", strerror(errno));
         goto fail;
@@ -585,7 +588,7 @@ static void tiny_web_task(void* portPtr) {
             timeout.tv_usec = 0;
             setsockopt(connfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
 
-            if(process(connfd, &clientaddr) <= 0) {
+            if (process(connfd, &clientaddr) <= 0) {
                 close(connfd);
             } else {
                 rb_web_ws_new_connection(ws_protocol, connfd);
@@ -603,13 +606,13 @@ fail:
     xTaskNotifyWait(0, 0xFFFFFFFF, (uint32_t*)&stopping_task, portMAX_DELAY);
 
 exit:
-    if(stopping_task)
+    if (stopping_task)
         xTaskNotify(stopping_task, 0, eNoAction);
     vTaskDelete(NULL);
 }
 
 TaskHandle_t rb_web_start(int port) {
-    if(!esp_spiffs_mounted(NULL)) {
+    if (!esp_spiffs_mounted(NULL)) {
         esp_vfs_spiffs_conf_t conf = {
             .base_path = "/data",
             .partition_label = NULL,
@@ -633,10 +636,14 @@ TaskHandle_t rb_web_start(int port) {
     return rb_web_start_no_spiffs(port, "/data");
 }
 
-TaskHandle_t rb_web_start_no_spiffs(int port, const char *working_directory_path) {
+void rb_web_set_task_stack(uint16_t size) {
+    web_server_stack_size = size;
+}
+
+TaskHandle_t rb_web_start_no_spiffs(int port, const char* working_directory_path) {
     TaskHandle_t task;
     working_directory = working_directory_path;
-    xTaskCreate(&tiny_web_task, "rbctrl_web", 3072, (void*)port, 2, &task);
+    xTaskCreate(&tiny_web_task, "rbctrl_web", web_server_stack_size, (void*)port, 2, &task);
     return task;
 }
 
@@ -669,6 +676,6 @@ esp_err_t rb_web_add_file(const char* filename, const char* data, size_t len) {
     return res;
 }
 
-const char *rb_web_get_files_root(void) {
+const char* rb_web_get_files_root(void) {
     return working_directory;
 }
